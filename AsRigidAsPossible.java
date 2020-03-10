@@ -7,6 +7,7 @@ import java.io.*;
 public class AsRigidAsPossible extends Applet {
 	static Frame myFrame = null; 
 	Button bQuit; 
+	Button bClear; 
 	Panel mainPanel; 
 	private MyGraphics myG; 
 	public int borderSize; 
@@ -16,6 +17,14 @@ public class AsRigidAsPossible extends Applet {
 		borderSize = 10000;
         paintColor = Color.red;
         bkColor    = Color.lightGray;
+		bClear = new Button("Clear");
+	}
+
+	public void clearMe() {
+		Graphics g = getGraphics(); 
+		Dimension dimension = getSize();
+		g.setColor(getBackground());
+		g.fillRect(0, 0, dimension.width, dimension.height);
 	}
 
 	public void init() { // Initialize the applet 
@@ -29,6 +38,8 @@ public class AsRigidAsPossible extends Applet {
 		// UI
 		Panel panel2 = new Panel(); 
 			panel2.setBackground(Color.lightGray);
+		bClear = new Button("Clear"); 
+			panel2.add(bClear);
 		if (myFrame != null) {
 			bQuit = new Button("Quit");
 			panel2.add(bQuit);
@@ -38,6 +49,18 @@ public class AsRigidAsPossible extends Applet {
 		add("South", mainPanel);
 
 		myG = new MyGraphics(paintColor, Color.yellow, Color.gray);
+
+		// Clear function 
+		bClear.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				// Clear components 
+				myG.clear(mainPanel, getBackground()); 
+				// Clear screen 
+				clearMe(); 
+				Graphics g = getGraphics(); 
+				g.setPaintMode();
+			}
+		});
 
 		// Quit function 
 		if (myFrame != null) {
@@ -58,6 +81,7 @@ public class AsRigidAsPossible extends Applet {
 				// Debug: Print mouse input coordinates 
 				// System.out.println("(" + x + ", " + y + ")");
 				myG.addVertex(g, x, y);
+				g.setPaintMode(); 
 			}
 		});
 	}

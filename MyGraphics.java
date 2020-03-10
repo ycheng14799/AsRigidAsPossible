@@ -15,6 +15,11 @@ public class MyGraphics {
 		thePoly = new MyPolygon(); 
 	}
 
+	public void clear (Component component, Color paramColor) {
+		thePoly = new MyPolygon();
+		component.repaint();
+	}
+
 	public void addVertex(Graphics g, int x, int y) {
 		Color color = g.getColor(); 
 		if (thePoly.npoints > 2) {
