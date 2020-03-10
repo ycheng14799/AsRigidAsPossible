@@ -20,8 +20,22 @@ public class MyGraphics {
 		component.repaint();
 	}
 
+	public void triangulate(Graphics g) {
+		thePoly.triangulate();
+		/*
+		for(int i=0;i<thePoly.numTriangles;i++) {
+			g.setColor(triColor);
+			for (int j=0; j <thePoly.triangles[i].npoints; j++) {
+				drawPoint(g, thePoly.triangles[i].xpoints[j], thePoly.triangles[i].ypoints[j]);
+			}
+			//g.drawLine(thePoly.triangles[i].xpoints[thePoly.numTriangles-1], 
+			//	thePoly.triangles[i].ypoints[thePoly.numTriangles-1],
+			//	thePoly.triangles[i].xpoints[0], thePoly.triangles[i].ypoints[0]);
+		}
+		*/
+	}
+
 	public void addVertex(Graphics g, int x, int y) {
-		Color color = g.getColor(); 
 		if (thePoly.npoints > 2) {
 			g.setColor(bkColor);
 			g.drawLine(thePoly.xpoints[thePoly.npoints-1],
@@ -40,18 +54,14 @@ public class MyGraphics {
 				   thePoly.ypoints[thePoly.npoints-1],
 				   x,y);
 		}
-		g.setColor(color);
 		thePoly.addPoint(x,y);
 		drawPoint(g, x, y);
 	}
 
 	public void drawPoint(Graphics g, int x, int y) {
-		Color color = g.getColor(); 
-		g.setColor(paintColor);
 		g.fillOval(x - pointRadius, 
 			y - pointRadius, 
 			pointRadius + pointRadius,
 			pointRadius + pointRadius); 
-		g.setColor(color);
 	}
 }

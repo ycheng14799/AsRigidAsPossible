@@ -6,8 +6,9 @@ import java.io.*;
 /* Class AsRigidAsPossible */ 
 public class AsRigidAsPossible extends Applet {
 	static Frame myFrame = null; 
-	Button bQuit; 
+	Button bTriangulate; 
 	Button bClear; 
+	Button bQuit; 
 	Panel mainPanel; 
 	private MyGraphics myG; 
 	public int borderSize; 
@@ -17,6 +18,7 @@ public class AsRigidAsPossible extends Applet {
 		borderSize = 10000;
         paintColor = Color.red;
         bkColor    = Color.lightGray;
+		bTriangulate = new Button("Triangulate");
 		bClear = new Button("Clear");
 	}
 
@@ -38,6 +40,8 @@ public class AsRigidAsPossible extends Applet {
 		// UI
 		Panel panel2 = new Panel(); 
 			panel2.setBackground(Color.lightGray);
+		bTriangulate = new Button("Triangulate");
+			panel2.add(bTriangulate);
 		bClear = new Button("Clear"); 
 			panel2.add(bClear);
 		if (myFrame != null) {
@@ -49,6 +53,15 @@ public class AsRigidAsPossible extends Applet {
 		add("South", mainPanel);
 
 		myG = new MyGraphics(paintColor, Color.yellow, Color.gray);
+		
+		// Triangulation function
+		bTriangulate.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				Graphics g = getGraphics();
+				myG.triangulate(g);
+				g.setPaintMode();
+			}
+		});
 
 		// Clear function 
 		bClear.addMouseListener(new MouseAdapter() {
