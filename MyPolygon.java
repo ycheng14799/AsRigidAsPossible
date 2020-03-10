@@ -5,17 +5,17 @@ public class MyPolygon extends Polygon {
 	public int[] tempX = new int[3];
 	public int[] tempY = new int[3];
 	public int numTriangles; 
-	public boolean triangulated; 
+	public boolean triangulated = false; 
 
 	private void resizeTriangles(int num) {
 		assert(tempX.length == tempY.length); 
-		while(3*num > tempTri.length) {
+		while(3*num > tempX.length) {
 			// Double array capacity 
 			int[] copyX = new int[tempX.length*2]; 
 			int[] copyY = new int[tempX.length*2];
 			// Copy data across 
-			System.arraycopy(tempX, 0, copyX, tempX.length);
-			System.arraycopy(tempY, 0, copyY, tempY.length);
+			System.arraycopy(tempX, 0, copyX, 0, tempX.length);
+			System.arraycopy(tempY, 0, copyY, 0, tempX.length);
 			// Reset references 
 			tempX = copyX; 
 			tempY = copyY; 
@@ -64,16 +64,15 @@ public class MyPolygon extends Polygon {
 							tempX[3*(numTriangles-1)] = xpoints[i];
 							tempX[3*(numTriangles-1) + 1] = xpoints[j];
 							tempX[3*(numTriangles-1) + 2] = xpoints[k];
-							/*
-							numTriangles++;
-							resizeTriangles(numTriangles);
-							triangles[numTriangles-1] = new Polygon(new int[]{xpoints[i],xpoints[j],xpoints[k]},
-								new int[]{ypoints[i],ypoints[j],ypoints[k]}, 3);
-							*/
+							tempY[3*(numTriangles-1)] = ypoints[i];
+							tempY[3*(numTriangles-1) + 1] = ypoints[j];
+							tempY[3*(numTriangles-1) + 2] = ypoints[k];
 						}
 					}
 				}
 			}
 		}
+
+		System.out.println(numTriangles);
 	}
 }
