@@ -20,24 +20,43 @@ public class MyGraphics {
 		component.repaint();
 	}
 
+	public void redrawPolygon(Graphics g) {
+		for(int i=0;i<thePoly.npoints;i++) {
+			drawPoint(g, thePoly.xpoints[i], thePoly.ypoints[i]);
+		}
+		for(int i=0;i<thePoly.npoints-1;i++) {
+			g.drawLine(thePoly.xpoints[i], 
+						thePoly.ypoints[i],
+						thePoly.xpoints[i+1], 
+						thePoly.ypoints[i+1]);
+		}
+		g.drawLine(thePoly.xpoints[thePoly.npoints-1], 
+						thePoly.ypoints[thePoly.npoints-1],
+						thePoly.xpoints[0], 
+						thePoly.ypoints[0]);
+	}
+
 	public void triangulate(Graphics g) {
 		thePoly.triangulate();
-		
+		g.setColor(triColor);
 		for(int i=0;i<thePoly.numTriangles;i++) {
-			g.setColor(triColor);
 			for (int j=0; j <thePoly.triangles[i].npoints; j++) {
 				drawPoint(g, thePoly.triangles[i].xpoints[j], thePoly.triangles[i].ypoints[j]);
-				if (j+1<thePoly.triangles[i].npoints) {
-					g.drawLine(thePoly.triangles[i].xpoints[j], 
+			}
+			for (int j=0; j <thePoly.triangles[i].npoints-1; j++) {
+				g.drawLine(thePoly.triangles[i].xpoints[j], 
 						thePoly.triangles[i].ypoints[j],
 						thePoly.triangles[i].xpoints[j+1], 
 						thePoly.triangles[i].ypoints[j+1]);
-				}
 			}
 			g.drawLine(thePoly.triangles[i].xpoints[2], 
 				thePoly.triangles[i].ypoints[2],
 				thePoly.triangles[i].xpoints[0], thePoly.triangles[i].ypoints[0]);
 		}
+		g.setColor(paintColor); 
+		redrawPolygon(g);
+
+		// TODO: Case of outer boundary intersecting triangulation
 	}
 
 	public void addVertex(Graphics g, int x, int y) {

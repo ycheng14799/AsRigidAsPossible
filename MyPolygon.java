@@ -38,6 +38,7 @@ public class MyPolygon extends Polygon {
 		}
 		// For each triple (i,j,k)
 		int xn, yn, zn;
+		double cx, cy;
 		boolean flag; 
 		for (int i=0; i<npoints-2; i++) {
 			for (int j=i+1; j<npoints; j++) {
@@ -59,15 +60,20 @@ public class MyPolygon extends Polygon {
 								(z[m]-z[i])*zn <= 0);
 						}
 						if (flag) {
-							numTriangles++; 
-							resizeTriangles(numTriangles);
-							tempX[3*(numTriangles-1)] = xpoints[i];
-							tempX[3*(numTriangles-1) + 1] = xpoints[j];
-							tempX[3*(numTriangles-1) + 2] = xpoints[k];
-							tempY[3*(numTriangles-1)] = ypoints[i];
-							tempY[3*(numTriangles-1) + 1] = ypoints[j];
-							tempY[3*(numTriangles-1) + 2] = ypoints[k];
-							tempY[3*(numTriangles-1) + 2] = ypoints[k];
+							// Exclude triangles entirely outside 
+							cx = (xpoints[i] + xpoints[j] + xpoints[k]) / 3.0;
+							cy = (ypoints[i] + ypoints[j] + ypoints[k]) / 3.0;
+							if(contains(cx,cy)) {
+								numTriangles++; 
+								resizeTriangles(numTriangles);
+								tempX[3*(numTriangles-1)] = xpoints[i];
+								tempX[3*(numTriangles-1) + 1] = xpoints[j];
+								tempX[3*(numTriangles-1) + 2] = xpoints[k];
+								tempY[3*(numTriangles-1)] = ypoints[i];
+								tempY[3*(numTriangles-1) + 1] = ypoints[j];
+								tempY[3*(numTriangles-1) + 2] = ypoints[k];
+								tempY[3*(numTriangles-1) + 2] = ypoints[k];
+							}
 						}
 					}
 				}
@@ -83,5 +89,6 @@ public class MyPolygon extends Polygon {
 			}
 			triangles[i] = new Polygon(newPolyX, newPolyY, 3);
 		}
+		triangulated = true; 
 	}
 }

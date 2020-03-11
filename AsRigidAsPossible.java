@@ -57,6 +57,7 @@ public class AsRigidAsPossible extends Applet {
 		// Triangulation function
 		bTriangulate.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				clearMe();
 				Graphics g = getGraphics();
 				myG.triangulate(g);
 				g.setPaintMode();
@@ -87,14 +88,16 @@ public class AsRigidAsPossible extends Applet {
 		// Handling mouse input 
 		this.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				Graphics g = getGraphics(); 
-				g.setColor(paintColor);
-				int x = e.getX();
-				int y = e.getY();
-				// Debug: Print mouse input coordinates 
-				// System.out.println("(" + x + ", " + y + ")");
-				myG.addVertex(g, x, y);
-				g.setPaintMode(); 
+				if(!myG.thePoly.triangulated) {
+					Graphics g = getGraphics(); 
+					g.setColor(paintColor);
+					int x = e.getX();
+					int y = e.getY();
+					// Debug: Print mouse input coordinates 
+					// System.out.println("(" + x + ", " + y + ")");
+					myG.addVertex(g, x, y);
+					g.setPaintMode(); 
+				}
 			}
 		});
 	}
