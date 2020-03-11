@@ -12,12 +12,13 @@ public class AsRigidAsPossible extends Applet {
 	Panel mainPanel; 
 	private MyGraphics myG; 
 	public int borderSize; 
-	public Color paintColor, bkColor; 
+	public Color paintColor, bkColor, constraintColor; 
 
 	public AsRigidAsPossible() { // Constructor
 		borderSize = 10000;
         paintColor = Color.red;
         bkColor    = Color.lightGray;
+		constraintColor = Color.blue;
 		bTriangulate = new Button("Triangulate");
 		bClear = new Button("Clear");
 	}
@@ -88,15 +89,18 @@ public class AsRigidAsPossible extends Applet {
 		// Handling mouse input 
 		this.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				int x = e.getX();
+				int y = e.getY();
 				if(!myG.thePoly.triangulated) {
 					Graphics g = getGraphics(); 
 					g.setColor(paintColor);
-					int x = e.getX();
-					int y = e.getY();
-					// Debug: Print mouse input coordinates 
-					// System.out.println("(" + x + ", " + y + ")");
 					myG.addVertex(g, x, y);
 					g.setPaintMode(); 
+				} else {
+					Graphics g = getGraphics(); 
+					g.setColor(constraintColor);
+					myG.addConstraint(g, x, y);
+					g.setPaintMode();
 				}
 			}
 		});

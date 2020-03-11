@@ -1,4 +1,5 @@
 import java.awt.*;
+import Jama.*; 
 
 public class MyPolygon extends Polygon {
 	public Polygon[] triangles;
@@ -6,6 +7,9 @@ public class MyPolygon extends Polygon {
 	public int[] tempY = new int[3];
 	public int numTriangles; 
 	public boolean triangulated = false; 
+	public int[][] gComponentsSingle = new int[6][6];
+	//public int[] constraintX = new int[3];
+	//public int[] constraintY = new int[3]; 
 
 	private void resizeTriangles(int num) {
 		assert(tempX.length == tempY.length); 
@@ -21,6 +25,24 @@ public class MyPolygon extends Polygon {
 			tempY = copyY; 
 		}
 		assert(tempX.length == tempY.length);
+	}
+
+	private void resizeConstraints(int num) {
+	/*
+		assert(constraintX.length == constraintY.length); 
+		while(num > constraintX.length) {
+			// Double array capacity
+			int[] copyX = new int[constraintX.length*2]; 
+			int[] copyY = new int[constraintX.length*2];
+			// Copy data across 
+			System.arraycopy(constraintX, 0, copyX, 0, tempX.length);
+			System.arraycopy(constraintY, 0, copyY, 0, tempX.length);
+			// Reset references 
+			constraintX = copyX;
+			constraintY = copyY;
+		}
+		assert(constraintX.length == constraintY.length);
+	*/
 	}
 
 	public MyPolygon() {}
@@ -91,4 +113,43 @@ public class MyPolygon extends Polygon {
 		}
 		triangulated = true; 
 	}
+
+	// Precompute components for scale-free manipulation
+	// Step One in Igarashi et. al's paper
+	// Helper method for calculating 
+	// matrix components for a single triangle
+	// @params: v0x, v0y, v1x, v1y, v2x, v2y 
+	// Output: integer array of matrix components 
+	public void calcComponentsSingle(int v0x, int v0y, int v1x, int v1y, int v2x, int v2y) {
+
+		// find x01, y01
+		int x01 = (v2x-v0x)*(v1x-v0x) + (v2y-v0y)*(v1y-v0y);
+		int y01 = (v2x-v0x)*(v1y-v0y) + (v2y-v0y)*(v0x-v1x);
+
+		// Populate gComponentsSingle[] array 
+		gComponentsSingle[0][0] = x01*x01 - 2*x01 + y01*y01 + 1; 
+		gComponentsSingle[2][0] = - x01*x01 + 2*x01 - 2*y01*y01;
+		gComponentsSingle[3][0] = 2*y01; 
+		gComponentsSingle[4][0] = 2*x01 - 2; 
+		gComponentsSingle[5][0] = - 2*y01; 
+		gComponentsSingle[1][1] = x01*x01 - 2*x01 + y01*y01 + 1; 
+		gComponentsSingle[2][1] = - 2*y01; 
+		gComponentsSingle[3][1] = - 2*y01*y01 + 2*x01 - 2*x01*x01; 
+		gComponentsSingle[4][1] = 2*y01; 
+		gComponentsSingle[5][1] = 2*x01 - 2; 
+		gComponentsSingle[2][2] = x01*x01 + y01*y01; 
+		gComponentsSingle[4][2] = - 2*x01; 
+		gComponentsSingle[5][2] = 2*y01; 
+		gComponentsSingle[3][3] = x01*x01 + y01*y01; 
+		gComponentsSingle[4][3] = - 2*y01; 
+		gComponentsSingle[5][3] = - 2*x01; 
+		gComponentsSingle[4][4] = 1; 
+		gComponentsSingle[5][5] = 1;
+	}
+
+	public void calcGMatrix() { 
+		
+	}
+
+
 }

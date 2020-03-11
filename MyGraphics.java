@@ -82,6 +82,11 @@ public class MyGraphics {
 		drawPoint(g, x, y);
 	}
 
+	// Set vertex constraint
+	public void addConstraint(Graphics g, int x, int y) {
+		drawPoint(g,x,y);
+	}
+
 	public void drawPoint(Graphics g, int x, int y) {
 		g.fillOval(x - pointRadius, 
 			y - pointRadius, 
