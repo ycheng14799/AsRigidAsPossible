@@ -22,17 +22,22 @@ public class MyGraphics {
 
 	public void triangulate(Graphics g) {
 		thePoly.triangulate();
-		/*
+		
 		for(int i=0;i<thePoly.numTriangles;i++) {
 			g.setColor(triColor);
 			for (int j=0; j <thePoly.triangles[i].npoints; j++) {
 				drawPoint(g, thePoly.triangles[i].xpoints[j], thePoly.triangles[i].ypoints[j]);
+				if (j+1<thePoly.triangles[i].npoints) {
+					g.drawLine(thePoly.triangles[i].xpoints[j], 
+						thePoly.triangles[i].ypoints[j],
+						thePoly.triangles[i].xpoints[j+1], 
+						thePoly.triangles[i].ypoints[j+1]);
+				}
 			}
-			//g.drawLine(thePoly.triangles[i].xpoints[thePoly.numTriangles-1], 
-			//	thePoly.triangles[i].ypoints[thePoly.numTriangles-1],
-			//	thePoly.triangles[i].xpoints[0], thePoly.triangles[i].ypoints[0]);
+			g.drawLine(thePoly.triangles[i].xpoints[2], 
+				thePoly.triangles[i].ypoints[2],
+				thePoly.triangles[i].xpoints[0], thePoly.triangles[i].ypoints[0]);
 		}
-		*/
 	}
 
 	public void addVertex(Graphics g, int x, int y) {

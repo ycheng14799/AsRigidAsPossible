@@ -67,12 +67,21 @@ public class MyPolygon extends Polygon {
 							tempY[3*(numTriangles-1)] = ypoints[i];
 							tempY[3*(numTriangles-1) + 1] = ypoints[j];
 							tempY[3*(numTriangles-1) + 2] = ypoints[k];
+							tempY[3*(numTriangles-1) + 2] = ypoints[k];
 						}
 					}
 				}
 			}
 		}
-
-		System.out.println(numTriangles);
+		triangles = new Polygon[numTriangles];
+		int[] newPolyX = new int[3]; 
+		int[] newPolyY = new int[3];
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<3; j++) {
+				newPolyX[j] = tempX[3*i + j];
+				newPolyY[j] = tempY[3*i + j]; 
+			}
+			triangles[i] = new Polygon(newPolyX, newPolyY, 3);
+		}
 	}
 }
