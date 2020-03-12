@@ -229,10 +229,24 @@ public class MyPolygon extends Polygon {
 		for(int i=0; i<vListX.size(); i++){
 			v[2*i] = vListX.get(i); 
 			v[(2*i) + 1] = vListY.get(i);
-			System.out.println(v[2*i]);
-			System.out.println(v[(2*i) + 1]);
 		}
-		
+
+		// Build G Matrix 
+		int[][] G = new int[v.length][v.length];
+		int[] vIdx = new int[3]; 
+		for(int i=0; i<numTriangles; i++) { 
+			// Get triangle vertex indices in v 
+			for(int j=0; j<triangles[i].npoints; j++) {
+				for(int k=0; k<v.length; k+=2) {
+					if(triangles[i].xpoints[j] == v[k] && triangles[i].ypoints[j] == v[k+1]) {
+						vIdx[j] = k;
+					}
+				}
+			}
+			// Calculate associated G components 
+
+		}
+	
 	}
 
 
