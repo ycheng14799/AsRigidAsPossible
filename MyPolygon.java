@@ -170,46 +170,39 @@ public class MyPolygon extends Polygon {
 		int y01 = (v2x-v0x)*(v1y-v0y) + (v2y-v0y)*(v0x-v1x);
 
 		// Populate gComponentsSingle[] array 
-		gComponentsSingle[0][0] = x01*x01 - 2*x01 + y01*y01 + 1; 
-		gComponentsSingle[2][0] = - x01*x01 + 2*x01 - 2*y01*y01;
-		gComponentsSingle[3][0] = 2*y01; 
-		gComponentsSingle[4][0] = 2*x01 - 2; 
-		gComponentsSingle[5][0] = - 2*y01; 
-		gComponentsSingle[1][1] = x01*x01 - 2*x01 + y01*y01 + 1; 
-		gComponentsSingle[2][1] = - 2*y01; 
-		gComponentsSingle[3][1] = - 2*y01*y01 + 2*x01 - 2*x01*x01; 
-		gComponentsSingle[4][1] = 2*y01; 
-		gComponentsSingle[5][1] = 2*x01 - 2; 
-		gComponentsSingle[2][2] = x01*x01 + y01*y01; 
-		gComponentsSingle[4][2] = - 2*x01; 
-		gComponentsSingle[5][2] = 2*y01; 
-		gComponentsSingle[3][3] = x01*x01 + y01*y01; 
-		gComponentsSingle[4][3] = - 2*y01; 
-		gComponentsSingle[5][3] = - 2*x01; 
-		gComponentsSingle[4][4] = 1; 
+		for(int i=0; i<gComponentsSingle.length; i++){
+			for(int j=0; j<gComponentsSingle[0].length; j++) {
+				gComponentsSingle[i][j] = 0; 
+			}
+		}
+		gComponentsSingle[0][0] = y01*y01 + x01*x01 - 2*x01 + 1;
+		gComponentsSingle[0][2] = -2*y01*y01 - 2*x01*x01 + 2*x01;
+		gComponentsSingle[0][3] = 2*y01;
+		gComponentsSingle[0][4] = 2*x01 - 2; 
+		gComponentsSingle[0][5] = -2*y01; 
+		gComponentsSingle[1][1] = y01*y01 + 1 + x01*x01 - 2*x01; 
+		gComponentsSingle[1][2] = -2*y01; 
+		gComponentsSingle[1][3] = -2*y01*y01 - 2*x01*x01 + 2*x01; 
+		gComponentsSingle[1][4] = 2*y01; 
+		gComponentsSingle[1][5] = -2 + 2*x01; 
+		gComponentsSingle[2][2] = y01*y01 + x01*x01; 
+		gComponentsSingle[2][4] = -2*x01; 
+		gComponentsSingle[2][5] = 2*y01; 
+		gComponentsSingle[3][3] = y01*y01 + x01*x01; 
+		gComponentsSingle[3][4] = -2*y01; 
+		gComponentsSingle[3][5] = -2*x01; 
+		gComponentsSingle[4][4] = 1;
 		gComponentsSingle[5][5] = 1;
 	}
 	// Helper method for populating the GMatrix 
 	public void buildG(int idx0, int idx1, int idx2) {
 		int[] actual = new int[]{idx0, idx0+1, idx1, idx1+1, idx2, idx2+1}; 
-		gMatrix[actual[0]][actual[0]] += gComponentsSingle[0][0];
-		gMatrix[actual[2]][actual[0]] += gComponentsSingle[2][0];
-		gMatrix[actual[3]][actual[0]] += gComponentsSingle[3][0];
-		gMatrix[actual[4]][actual[0]] += gComponentsSingle[4][0];
-		gMatrix[actual[5]][actual[0]] += gComponentsSingle[5][0];
-		gMatrix[actual[1]][actual[1]] += gComponentsSingle[1][1];
-		gMatrix[actual[2]][actual[1]] += gComponentsSingle[2][1];
-		gMatrix[actual[3]][actual[1]] += gComponentsSingle[3][1];
-		gMatrix[actual[4]][actual[1]] += gComponentsSingle[4][1];
-		gMatrix[actual[5]][actual[1]] += gComponentsSingle[5][1];
-		gMatrix[actual[2]][actual[2]] += gComponentsSingle[2][2];
-		gMatrix[actual[4]][actual[2]] += gComponentsSingle[4][2];
-		gMatrix[actual[5]][actual[2]] += gComponentsSingle[5][2];
-		gMatrix[actual[3]][actual[3]] += gComponentsSingle[3][3];
-		gMatrix[actual[4]][actual[3]] += gComponentsSingle[4][3];
-		gMatrix[actual[5]][actual[3]] += gComponentsSingle[5][3];
-		gMatrix[actual[4]][actual[4]] += gComponentsSingle[4][4];
-		gMatrix[actual[5]][actual[5]] += gComponentsSingle[5][5];
+		
+		for(int i=0; i < gComponentsSingle.length; i++) {
+			for(int j=0; j <gComponentsSingle[0].length; j++) {
+				gMatrix[actual[i]][actual[j]] += gComponentsSingle[i][j];
+			}
+		}
 	}
 
 	public void calcGMatrix() { 
