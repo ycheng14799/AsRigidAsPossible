@@ -101,8 +101,8 @@ public class MyGraphics {
 
 	// Manipulate shape 
 	public void manipulateShape(int idx, int newX, int newY) {
-		thePoly.constraintX[idx] = newX;
-		thePoly.constraintY[idx] = newY;
+		//thePoly.constraintX[idx] = newX;
+		//thePoly.constraintY[idx] = newY;
 		thePoly.shapeManipulate();
 	}
 
