@@ -55,8 +55,6 @@ public class MyGraphics {
 		}
 		g.setColor(paintColor); 
 		redrawPolygon(g);
-
-		// TODO: Case of outer boundary intersecting triangulation
 	}
 
 	public void addVertex(Graphics g, int x, int y) {
@@ -84,9 +82,18 @@ public class MyGraphics {
 
 	// Set vertex constraint
 	public void addConstraint(Graphics g, int x, int y) {
-		drawPoint(g,x,y);
+		int[] constrainedPoint = thePoly.addConstraint(x, y); 
+		if(constrainedPoint[0] == 1) {
+			drawPoint(g, constrainedPoint[1], constrainedPoint[2]);
+		}
 	}
 
+	// Compute components for shape manipulation 
+	public void preComputeForManipulation() {
+		thePoly.calcGMatrix();
+	}
+
+	// Drawing a point 
 	public void drawPoint(Graphics g, int x, int y) {
 		g.fillOval(x - pointRadius, 
 			y - pointRadius, 

@@ -1,5 +1,6 @@
 import java.awt.*;
 import Jama.*; 
+import java.util.ArrayList;
 
 public class MyPolygon extends Polygon {
 	public Polygon[] triangles;
@@ -8,8 +9,11 @@ public class MyPolygon extends Polygon {
 	public int numTriangles; 
 	public boolean triangulated = false; 
 	public int[][] gComponentsSingle = new int[6][6];
-	//public int[] constraintX = new int[3];
-	//public int[] constraintY = new int[3]; 
+	public int[] cOldX = new int[3];
+	public int[] cOldY = new int[3]; 
+	public int[] cNewX = new int[3]; 
+	public int[] cNewY = new int[3]; 
+	public int numConstraints = 0; 
 
 	private void resizeTriangles(int num) {
 		assert(tempX.length == tempY.length); 
@@ -28,21 +32,30 @@ public class MyPolygon extends Polygon {
 	}
 
 	private void resizeConstraints(int num) {
-	/*
-		assert(constraintX.length == constraintY.length); 
-		while(num > constraintX.length) {
+		assert(cOldX.length == cOldY.length);
+		assert(cOldX.length == cNewX.length);
+		assert(cNewX.length == cNewY.length);
+		while(num > cOldX.length) {
 			// Double array capacity
-			int[] copyX = new int[constraintX.length*2]; 
-			int[] copyY = new int[constraintX.length*2];
+			int[] copyOldX = new int[cOldX.length*2]; 
+			int[] copyOldY = new int[cOldX.length*2];
+			int[] copyNewX = new int[cOldX.length*2];
+			int[] copyNewY = new int[cOldX.length*2];
 			// Copy data across 
-			System.arraycopy(constraintX, 0, copyX, 0, tempX.length);
-			System.arraycopy(constraintY, 0, copyY, 0, tempX.length);
+			System.arraycopy(cOldX, 0, copyOldX, 0, tempX.length);
+			System.arraycopy(cOldY, 0, copyOldY, 0, tempX.length);
+			System.arraycopy(cNewX, 0, copyNewX, 0, tempX.length);
+			System.arraycopy(cNewY, 0, copyNewY, 0, tempY.length);
+			
 			// Reset references 
-			constraintX = copyX;
-			constraintY = copyY;
+			cOldX = copyOldX;
+			cOldY = copyOldY;
+			cNewX = copyNewX;
+			cNewY = copyNewY;
 		}
-		assert(constraintX.length == constraintY.length);
-	*/
+		assert(cOldX.length == cOldY.length);
+		assert(cOldX.length == cNewX.length);
+		assert(cNewX.length == cNewY.length);
 	}
 
 	public MyPolygon() {}
@@ -114,6 +127,34 @@ public class MyPolygon extends Polygon {
 		triangulated = true; 
 	}
 
+	public int[] addConstraint(int x, int y) {
+		int pointX, pointY, distToPoint; 
+
+		for(int i=0; i<numConstraints; i++) {
+			distToPoint = (cOldX[i] - x)*(cOldX[i] - x) + (cOldY[i] - y)*(cOldY[i] - y); 
+			if(distToPoint < 25) {
+				return new int[]{0, 0, 0};
+			}
+		}
+		for(int i=0; i<triangles.length; i++) {
+			for(int j=0; j<triangles[i].npoints; j++){
+				pointX = triangles[i].xpoints[j];
+				pointY = triangles[i].ypoints[j];
+				distToPoint = (pointX - x)*(pointX - x) + (pointY - y)*(pointY - y); 
+				if(distToPoint < 25) {
+					numConstraints++; 
+					resizeConstraints(numConstraints);
+					cOldX[numConstraints-1] = pointX;
+					cOldY[numConstraints-1] = pointY;
+					System.out.println("New Constraint: (" + pointX + ", " + pointY + ")");
+
+					return new int[]{1, pointX, pointY};
+				}
+			}
+		}
+		return new int[]{0, 0, 0};
+	}
+
 	// Precompute components for scale-free manipulation
 	// Step One in Igarashi et. al's paper
 	// Helper method for calculating 
@@ -148,6 +189,49 @@ public class MyPolygon extends Polygon {
 	}
 
 	public void calcGMatrix() { 
+		// Iterate through triangles 
+		// Compute v vector (Igarashi et al. Step One) 
+		ArrayList<Integer> vListX = new ArrayList<Integer>(); 
+		ArrayList<Integer> vListY = new ArrayList<Integer>();
+		int x, y;
+		boolean isConstraint, inV; 
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<triangles[i].npoints; j++) {
+				x = triangles[i].xpoints[j];
+				y = triangles[i].ypoints[j];
+				isConstraint = false;
+				for(int k=0; k<numConstraints; k++) { 
+					if(x == cOldX[k] && y == cOldY[k]) {
+						isConstraint = true; 
+						break;
+					}
+				}
+				inV = false; 
+				for(int k=0; k<vListX.size(); k++) {
+					if(x == vListX.get(k) && y == vListY.get(k)) {
+						inV = true; 
+						break; 
+					}
+				}
+				if(!inV) {
+					if(isConstraint) {
+						vListX.add(x);
+						vListY.add(y);
+					} else {
+						vListX.add(0, x);
+						vListY.add(0, y);
+					}
+				}
+			}
+		}
+		assert(vListX.size() == vListY.size());
+		int[] v = new int[vListX.size() * 2]; 
+		for(int i=0; i<vListX.size(); i++){
+			v[2*i] = vListX.get(i); 
+			v[(2*i) + 1] = vListY.get(i);
+			System.out.println(v[2*i]);
+			System.out.println(v[(2*i) + 1]);
+		}
 		
 	}
 

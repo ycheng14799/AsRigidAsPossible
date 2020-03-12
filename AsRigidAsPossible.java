@@ -7,6 +7,7 @@ import java.io.*;
 public class AsRigidAsPossible extends Applet {
 	static Frame myFrame = null; 
 	Button bTriangulate; 
+	Checkbox cAnimate; 
 	Button bClear; 
 	Button bQuit; 
 	Panel mainPanel; 
@@ -21,6 +22,7 @@ public class AsRigidAsPossible extends Applet {
 		constraintColor = Color.blue;
 		bTriangulate = new Button("Triangulate");
 		bClear = new Button("Clear");
+		cAnimate = new Checkbox("Animate");
 	}
 
 	public void clearMe() {
@@ -43,6 +45,8 @@ public class AsRigidAsPossible extends Applet {
 			panel2.setBackground(Color.lightGray);
 		bTriangulate = new Button("Triangulate");
 			panel2.add(bTriangulate);
+		cAnimate = new Checkbox("Animate");
+			panel2.add(cAnimate);
 		bClear = new Button("Clear"); 
 			panel2.add(bClear);
 		if (myFrame != null) {
@@ -63,6 +67,15 @@ public class AsRigidAsPossible extends Applet {
 				myG.triangulate(g);
 				g.setPaintMode();
 			}
+		});
+
+		// Prepare for animation 
+		cAnimate.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {               
+				if(e.getStateChange() == 1) {
+					myG.preComputeForManipulation(); 
+				}
+			} 
 		});
 
 		// Clear function 
@@ -96,7 +109,7 @@ public class AsRigidAsPossible extends Applet {
 					g.setColor(paintColor);
 					myG.addVertex(g, x, y);
 					g.setPaintMode(); 
-				} else {
+				} else if(!cAnimate.getState()) {
 					Graphics g = getGraphics(); 
 					g.setColor(constraintColor);
 					myG.addConstraint(g, x, y);
@@ -104,6 +117,8 @@ public class AsRigidAsPossible extends Applet {
 				}
 			}
 		});
+
+
 	}
 	
 	public static void main(String[] args) { // Main
@@ -116,6 +131,5 @@ public class AsRigidAsPossible extends Applet {
 		myFrame.pack(); // Set window size 
 		myFrame.setSize(600, 500);
 		myFrame.setVisible(true); // Make frame visible 
-
 	} 
 }
