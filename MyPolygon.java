@@ -313,6 +313,7 @@ public class MyPolygon extends Polygon {
 		Matrix g01Matrix = new Matrix(g01);
 		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
 		Matrix b = g01Matrix.plus(g10Matrix.transpose());
+		b = b.times(-1);
 		gPrimeInvB = gPrime.inverse().times(b);
 	}
 
