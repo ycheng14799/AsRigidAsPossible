@@ -9,11 +9,13 @@ public class MyPolygon extends Polygon {
 	public int numTriangles; 
 	public boolean triangulated = false; 
 	public int[][] gComponentsSingle = new int[6][6];
-	public int[] cOldX = new int[3];
-	public int[] cOldY = new int[3]; 
-	public int[] cNewX = new int[3]; 
-	public int[] cNewY = new int[3]; 
+	public int[] constraintX = new int[3];
+	public int[] constraintY = new int[3]; 
 	public int numConstraints = 0; 
+	public int[][] gMatrix; 
+	public int[] v;
+	public Matrix gPrimeInvB;
+	public int[] newPos; 
 
 	private void resizeTriangles(int num) {
 		assert(tempX.length == tempY.length); 
@@ -32,30 +34,20 @@ public class MyPolygon extends Polygon {
 	}
 
 	private void resizeConstraints(int num) {
-		assert(cOldX.length == cOldY.length);
-		assert(cOldX.length == cNewX.length);
-		assert(cNewX.length == cNewY.length);
-		while(num > cOldX.length) {
+		assert(constraintX.length == constraintY.length);
+		while(num > constraintX.length) {
 			// Double array capacity
-			int[] copyOldX = new int[cOldX.length*2]; 
-			int[] copyOldY = new int[cOldX.length*2];
-			int[] copyNewX = new int[cOldX.length*2];
-			int[] copyNewY = new int[cOldX.length*2];
+			int[] copyOldX = new int[constraintX.length*2]; 
+			int[] copyOldY = new int[constraintX.length*2];
 			// Copy data across 
-			System.arraycopy(cOldX, 0, copyOldX, 0, tempX.length);
-			System.arraycopy(cOldY, 0, copyOldY, 0, tempX.length);
-			System.arraycopy(cNewX, 0, copyNewX, 0, tempX.length);
-			System.arraycopy(cNewY, 0, copyNewY, 0, tempY.length);
+			System.arraycopy(constraintX, 0, copyOldX, 0, tempX.length);
+			System.arraycopy(constraintY, 0, copyOldY, 0, tempX.length);
 			
 			// Reset references 
-			cOldX = copyOldX;
-			cOldY = copyOldY;
-			cNewX = copyNewX;
-			cNewY = copyNewY;
+			constraintX = copyOldX;
+			constraintY = copyOldY;
 		}
-		assert(cOldX.length == cOldY.length);
-		assert(cOldX.length == cNewX.length);
-		assert(cNewX.length == cNewY.length);
+		assert(constraintX.length == constraintY.length);
 	}
 
 	public MyPolygon() {}
@@ -131,7 +123,7 @@ public class MyPolygon extends Polygon {
 		int pointX, pointY, distToPoint; 
 
 		for(int i=0; i<numConstraints; i++) {
-			distToPoint = (cOldX[i] - x)*(cOldX[i] - x) + (cOldY[i] - y)*(cOldY[i] - y); 
+			distToPoint = (constraintX[i] - x)*(constraintX[i] - x) + (constraintY[i] - y)*(constraintY[i] - y); 
 			if(distToPoint < 25) {
 				return new int[]{0, 0, 0};
 			}
@@ -144,8 +136,8 @@ public class MyPolygon extends Polygon {
 				if(distToPoint < 25) {
 					numConstraints++; 
 					resizeConstraints(numConstraints);
-					cOldX[numConstraints-1] = pointX;
-					cOldY[numConstraints-1] = pointY;
+					constraintX[numConstraints-1] = pointX;
+					constraintY[numConstraints-1] = pointY;
 					System.out.println("New Constraint: (" + pointX + ", " + pointY + ")");
 
 					return new int[]{1, pointX, pointY};
@@ -155,6 +147,17 @@ public class MyPolygon extends Polygon {
 		return new int[]{0, 0, 0};
 	}
 
+	public int[] setConstraintActive(int x, int y) {
+		int distToPoint; 
+		for(int i=0; i<numConstraints; i++) {
+			distToPoint = (constraintX[i] - x)*(constraintX[i] - x) + (constraintY[i] - y)*(constraintY[i] - y); 
+			if(distToPoint < 25) { 
+				return new int[]{1, i};
+			} 
+		}
+		return new int[]{0, 0};
+	}
+
 	// Precompute components for scale-free manipulation
 	// Step One in Igarashi et. al's paper
 	// Helper method for calculating 
@@ -162,7 +165,6 @@ public class MyPolygon extends Polygon {
 	// @params: v0x, v0y, v1x, v1y, v2x, v2y 
 	// Output: integer array of matrix components 
 	public void calcComponentsSingle(int v0x, int v0y, int v1x, int v1y, int v2x, int v2y) {
-
 		// find x01, y01
 		int x01 = (v2x-v0x)*(v1x-v0x) + (v2y-v0y)*(v1y-v0y);
 		int y01 = (v2x-v0x)*(v1y-v0y) + (v2y-v0y)*(v0x-v1x);
@@ -187,6 +189,28 @@ public class MyPolygon extends Polygon {
 		gComponentsSingle[4][4] = 1; 
 		gComponentsSingle[5][5] = 1;
 	}
+	// Helper method for populating the GMatrix 
+	public void buildG(int idx0, int idx1, int idx2) {
+		int[] actual = new int[]{idx0, idx0+1, idx1, idx1+1, idx2, idx2+1}; 
+		gMatrix[actual[0]][actual[0]] += gComponentsSingle[0][0];
+		gMatrix[actual[2]][actual[0]] += gComponentsSingle[2][0];
+		gMatrix[actual[3]][actual[0]] += gComponentsSingle[3][0];
+		gMatrix[actual[4]][actual[0]] += gComponentsSingle[4][0];
+		gMatrix[actual[5]][actual[0]] += gComponentsSingle[5][0];
+		gMatrix[actual[1]][actual[1]] += gComponentsSingle[1][1];
+		gMatrix[actual[2]][actual[1]] += gComponentsSingle[2][1];
+		gMatrix[actual[3]][actual[1]] += gComponentsSingle[3][1];
+		gMatrix[actual[4]][actual[1]] += gComponentsSingle[4][1];
+		gMatrix[actual[5]][actual[1]] += gComponentsSingle[5][1];
+		gMatrix[actual[2]][actual[2]] += gComponentsSingle[2][2];
+		gMatrix[actual[4]][actual[2]] += gComponentsSingle[4][2];
+		gMatrix[actual[5]][actual[2]] += gComponentsSingle[5][2];
+		gMatrix[actual[3]][actual[3]] += gComponentsSingle[3][3];
+		gMatrix[actual[4]][actual[3]] += gComponentsSingle[4][3];
+		gMatrix[actual[5]][actual[3]] += gComponentsSingle[5][3];
+		gMatrix[actual[4]][actual[4]] += gComponentsSingle[4][4];
+		gMatrix[actual[5]][actual[5]] += gComponentsSingle[5][5];
+	}
 
 	public void calcGMatrix() { 
 		// Iterate through triangles 
@@ -201,7 +225,7 @@ public class MyPolygon extends Polygon {
 				y = triangles[i].ypoints[j];
 				isConstraint = false;
 				for(int k=0; k<numConstraints; k++) { 
-					if(x == cOldX[k] && y == cOldY[k]) {
+					if(x == constraintX[k] && y == constraintY[k]) {
 						isConstraint = true; 
 						break;
 					}
@@ -225,14 +249,14 @@ public class MyPolygon extends Polygon {
 			}
 		}
 		assert(vListX.size() == vListY.size());
-		int[] v = new int[vListX.size() * 2]; 
+		v = new int[vListX.size() * 2]; 
 		for(int i=0; i<vListX.size(); i++){
 			v[2*i] = vListX.get(i); 
 			v[(2*i) + 1] = vListY.get(i);
 		}
 
 		// Build G Matrix 
-		int[][] G = new int[v.length][v.length];
+		gMatrix = new int[v.length][v.length];
 		int[] vIdx = new int[3]; 
 		for(int i=0; i<numTriangles; i++) { 
 			// Get triangle vertex indices in v 
@@ -244,10 +268,74 @@ public class MyPolygon extends Polygon {
 				}
 			}
 			// Calculate associated G components 
+			calcComponentsSingle(triangles[i].xpoints[0], triangles[i].ypoints[0], 
+				triangles[i].xpoints[1], triangles[i].ypoints[1], 
+				triangles[i].xpoints[2], triangles[i].ypoints[2]);
+			buildG(vIdx[0], vIdx[1], vIdx[2]);
 
+			calcComponentsSingle(triangles[i].xpoints[1], triangles[i].ypoints[1], 
+				triangles[i].xpoints[2], triangles[i].ypoints[2], 
+				triangles[i].xpoints[0], triangles[i].ypoints[0]);
+			buildG(vIdx[1], vIdx[2], vIdx[0]);
+
+			calcComponentsSingle(triangles[i].xpoints[2], triangles[i].ypoints[2], 
+				triangles[i].xpoints[0], triangles[i].ypoints[0], 
+				triangles[i].xpoints[1], triangles[i].ypoints[1]);
+			buildG(vIdx[2], vIdx[0], vIdx[1]);
 		}
-	
 	}
 
+	// Function for obtaining G' and B in scale-free construction 
+	public void getGPrimeInvB() {
+		int freeVarCount = v.length - 2*numConstraints;
+		int cVarCount = 2*numConstraints;
+		int allVarCount = v.length; 
+		double[][] g00 = new double[freeVarCount][freeVarCount];
+		double[][] g10 = new double[cVarCount][freeVarCount];
+		double[][] g01 = new double[freeVarCount][cVarCount];
+		for(int i=0;i<freeVarCount;i++) {
+			for(int j=0;j<freeVarCount;j++) {
+				g00[i][j] = (double)gMatrix[i][j];
+			}
+		}
+		for(int i=0; i<cVarCount; i++) {
+			for(int j=0; j<freeVarCount; j++) {
+				g10[i][j] = (double)gMatrix[freeVarCount+i][j];
+			}
+		}
+		for(int i=0; i<freeVarCount; i++) {
+			for(int j=0; j<cVarCount; j++) {
+				g01[i][j] = (double)gMatrix[i][freeVarCount+j];
+			}
+		}
+		Matrix g00Matrix = new Matrix(g00);
+		Matrix g10Matrix = new Matrix(g10); 
+		Matrix g01Matrix = new Matrix(g01);
+		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
+		Matrix b = g01Matrix.plus(g10Matrix.transpose());
+		gPrimeInvB = gPrime.inverse().times(b);
+	}
 
+	// Calculating new coordinates 
+	public void shapeManipulate() {
+		//System.out.println(gPrimeInvB.getRowDimension() + ", " + gPrimeInvB.getColumnDimension());
+		double[][] constraints = new double[2*numConstraints][1];
+		for(int i=0; i<numConstraints; i++) { 
+			constraints[2*i][0] = constraintX[i];
+			constraints[2*i + 1][0] = constraintY[i];
+		}
+		Matrix qMatrix = new Matrix(constraints); 
+		//System.out.println(qMatrix.getRowDimension() + ", " + qMatrix.getColumnDimension());
+		Matrix manipulateNewPos = gPrimeInvB.times(qMatrix);
+		double[][] newPosDouble = manipulateNewPos.getArrayCopy();
+		//System.out.println(newPosDouble[0].length);
+		newPos = new int[newPosDouble.length]; 
+		System.out.println("v length: " + v.length);
+		System.out.println("New Length: " + newPosDouble.length);
+
+		for(int i=0; i<newPosDouble.length; i+=2) {
+			System.out.println("Old: " + v[i] + ", " + v[i+1]);
+			System.out.println("New: " + (int)newPosDouble[i][0] + ", " + (int)newPosDouble[i+1][0]);
+		}
+	}
 }

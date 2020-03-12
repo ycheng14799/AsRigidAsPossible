@@ -91,6 +91,19 @@ public class MyGraphics {
 	// Compute components for shape manipulation 
 	public void preComputeForManipulation() {
 		thePoly.calcGMatrix();
+		thePoly.getGPrimeInvB();
+	}
+
+	// Get active point for shape manipulation
+	public int[] setConstraintActive(int x, int y) {
+		return thePoly.setConstraintActive(x, y);
+	}
+
+	// Manipulate shape 
+	public void manipulateShape(int idx, int newX, int newY) {
+		thePoly.constraintX[idx] = newX;
+		thePoly.constraintY[idx] = newY;
+		thePoly.shapeManipulate();
 	}
 
 	// Drawing a point 

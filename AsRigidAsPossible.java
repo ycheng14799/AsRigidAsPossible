@@ -14,6 +14,8 @@ public class AsRigidAsPossible extends Applet {
 	private MyGraphics myG; 
 	public int borderSize; 
 	public Color paintColor, bkColor, constraintColor; 
+	public boolean manipulatingShape = false; 
+	public int activeConstraintIdx;
 
 	public AsRigidAsPossible() { // Constructor
 		borderSize = 10000;
@@ -63,7 +65,10 @@ public class AsRigidAsPossible extends Applet {
 		bTriangulate.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				clearMe();
+				// Reset animate 
+				cAnimate.setState(false);
 				Graphics g = getGraphics();
+				// Triangulate
 				myG.triangulate(g);
 				g.setPaintMode();
 			}
@@ -85,6 +90,8 @@ public class AsRigidAsPossible extends Applet {
 				myG.clear(mainPanel, getBackground()); 
 				// Clear screen 
 				clearMe(); 
+				// Reset animate checkbox
+				cAnimate.setState(false);
 				Graphics g = getGraphics(); 
 				g.setPaintMode();
 			}
@@ -114,6 +121,24 @@ public class AsRigidAsPossible extends Applet {
 					g.setColor(constraintColor);
 					myG.addConstraint(g, x, y);
 					g.setPaintMode();
+				}
+			}
+			public void mousePressed(MouseEvent e) {
+				if(cAnimate.getState()) {
+					int x = e.getX();
+					int y = e.getY();
+					if(myG.setConstraintActive(x, y)[0] == 1) {
+						activeConstraintIdx = myG.setConstraintActive(x, y)[1];
+						manipulatingShape = true; 
+					}
+				}
+			}
+			public void mouseReleased(MouseEvent e) {
+				if(cAnimate.getState() && manipulatingShape) {
+					int x = e.getX();
+					int y = e.getY();
+					myG.manipulateShape(activeConstraintIdx, x, y);
+					manipulatingShape = false;
 				}
 			}
 		});
