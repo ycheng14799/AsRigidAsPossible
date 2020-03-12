@@ -197,7 +197,6 @@ public class MyPolygon extends Polygon {
 	// Helper method for populating the GMatrix 
 	public void buildG(int idx0, int idx1, int idx2) {
 		int[] actual = new int[]{idx0, idx0+1, idx1, idx1+1, idx2, idx2+1}; 
-		
 		for(int i=0; i < gComponentsSingle.length; i++) {
 			for(int j=0; j <gComponentsSingle[0].length; j++) {
 				gMatrix[actual[i]][actual[j]] += gComponentsSingle[i][j];
@@ -207,56 +206,43 @@ public class MyPolygon extends Polygon {
 
 	public void calcGMatrix() { 
 		// Iterate through triangles 
-		// Compute v vector (Igarashi et al. Step One) 
+		// Find unique verticies 
 		ArrayList<Integer> vListX = new ArrayList<Integer>(); 
 		ArrayList<Integer> vListY = new ArrayList<Integer>();
-		int x, y;
-		boolean isConstraint, inV; 
-		for(int i=0; i<numTriangles; i++) {
+		int x, y; 
+		boolean inV;
+		for(int i=0; i<numTriangles; i++) { 
 			for(int j=0; j<triangles[i].npoints; j++) {
 				x = triangles[i].xpoints[j];
 				y = triangles[i].ypoints[j];
-				isConstraint = false;
-				for(int k=0; k<numConstraints; k++) { 
-					if(x == constraintX[k] && y == constraintY[k]) {
-						isConstraint = true; 
+				inV = false; 
+				for(int k=0; k<vListX.size(); k++) {
+					if(x == vListX.get(k) && y == vListY.get(k)){
+						inV = true; 
 						break;
 					}
 				}
-				inV = false; 
-				for(int k=0; k<vListX.size(); k++) {
-					if(x == vListX.get(k) && y == vListY.get(k)) {
-						inV = true; 
-						break; 
-					}
-				}
 				if(!inV) {
-					if(isConstraint) {
-						vListX.add(x);
-						vListY.add(y);
-					} else {
-						vListX.add(0, x);
-						vListY.add(0, y);
-					}
+					vListX.add(x);
+					vListY.add(y);
 				}
 			}
 		}
-		assert(vListX.size() == vListY.size());
 		v = new int[vListX.size() * 2]; 
 		for(int i=0; i<vListX.size(); i++){
 			v[2*i] = vListX.get(i); 
 			v[(2*i) + 1] = vListY.get(i);
 		}
 
-		// Build G Matrix 
 		gMatrix = new int[v.length][v.length];
-		int[] vIdx = new int[3]; 
+		int[] vIdx = new int[3];
 		for(int i=0; i<numTriangles; i++) { 
 			// Get triangle vertex indices in v 
 			for(int j=0; j<triangles[i].npoints; j++) {
 				for(int k=0; k<v.length; k+=2) {
 					if(triangles[i].xpoints[j] == v[k] && triangles[i].ypoints[j] == v[k+1]) {
 						vIdx[j] = k;
+						break;
 					}
 				}
 			}
@@ -280,34 +266,48 @@ public class MyPolygon extends Polygon {
 
 	// Function for obtaining G' and B in scale-free construction 
 	public void getGPrimeInvB() {
-		int freeVarCount = v.length - 2*numConstraints;
-		int cVarCount = 2*numConstraints;
-		int allVarCount = v.length; 
-		double[][] g00 = new double[freeVarCount][freeVarCount];
-		double[][] g10 = new double[cVarCount][freeVarCount];
-		double[][] g01 = new double[freeVarCount][cVarCount];
-		for(int i=0;i<freeVarCount;i++) {
-			for(int j=0;j<freeVarCount;j++) {
-				g00[i][j] = (double)gMatrix[i][j];
+		int[][] gReorderY = new int[gMatrix.length - 2*numConstraints][gMatrix.length];
+		int currGReorderYRow = 0; 
+		int[][] gReorderYConstraints = new int[2*numConstraints][gMatrix.length];
+		int currGReorderYConstraintsRow = 0;
+		boolean isConstraint;
+		for(int i=0; i<gMatrix.length; i+=2) {
+			isConstraint = false; 
+			for(int j=0; j<numConstraints; j++) {
+				if(constraintX[j] == v[i] && constraintY[j] == v[i+1]) {
+					isConstraint = true; 
+				}
+			}
+			if(isConstraint) {
+				for(int j=0; j<gMatrix.length; j++) {
+					gReorderYConstraints[currGReorderYConstraintsRow][j] = gMatrix[i][j];
+					gReorderYConstraints[currGReorderYConstraintsRow+1][j] = gMatrix[i+1][j];
+				}
+				currGReorderYConstraintsRow+=2; 
+			} else {
+				for(int j=0; j<gMatrix.length; j++) {
+					gReorderY[currGReorderYRow][j] = gMatrix[i][j];
+					gReorderY[currGReorderYRow+1][j] = gMatrix[i+1][j];
+				}
+				currGReorderYRow+=2;
 			}
 		}
-		for(int i=0; i<cVarCount; i++) {
-			for(int j=0; j<freeVarCount; j++) {
-				g10[i][j] = (double)gMatrix[freeVarCount+i][j];
+		int[][] gReorderCombined = new int[gMatrix.length][gMatrix.length];
+		int currGReorderYCombineRow = 0; 
+		for(int i=0; i<gReorderY.length; i++) {
+			for(int j=0; j<gMatrix.length; j++) {
+				gReorderCombined[currGReorderYCombineRow][j] = gReorderY[i][j];
 			}
+			currGReorderYCombineRow++;
 		}
-		for(int i=0; i<freeVarCount; i++) {
-			for(int j=0; j<cVarCount; j++) {
-				g01[i][j] = (double)gMatrix[i][freeVarCount+j];
+		for(int i=0; i<gReorderYConstraints.length; i++) {
+			for(int j=0; j<gMatrix.length; j++) {
+				gReorderCombined[currGReorderYCombineRow][j] = gReorderYConstraints[i][j];
 			}
+			currGReorderYCombineRow++;
 		}
-		Matrix g00Matrix = new Matrix(g00);
-		Matrix g10Matrix = new Matrix(g10); 
-		Matrix g01Matrix = new Matrix(g01);
-		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
-		Matrix b = g01Matrix.plus(g10Matrix.transpose());
-		b = b.times(-1);
-		gPrimeInvB = gPrime.inverse().times(b);
+
+
 	}
 
 	// Calculating new coordinates 
