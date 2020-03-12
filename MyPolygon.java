@@ -308,6 +308,8 @@ public class MyPolygon extends Polygon {
 		}
 
 
+
+
 	}
 
 	// Calculating new coordinates 
