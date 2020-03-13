@@ -105,7 +105,7 @@ public class MyGraphics {
 	public void manipulateShape(int idx, int newX, int newY) {
 		//thePoly.constraintX[idx] = newX;
 		//thePoly.constraintY[idx] = newY;
-		//thePoly.shapeManipulate();
+		thePoly.shapeManipulate();
 	}
 
 	// Drawing a point 

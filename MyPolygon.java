@@ -175,23 +175,23 @@ public class MyPolygon extends Polygon {
 				gComponentsSingle[i][j] = 0; 
 			}
 		}
-		gComponentsSingle[0][0] = y01*y01 + x01*x01 - 2*x01 + 1;
-		gComponentsSingle[0][2] = -2*y01*y01 - 2*x01*x01 + 2*x01;
-		gComponentsSingle[0][3] = 2*y01;
-		gComponentsSingle[0][4] = 2*x01 - 2; 
-		gComponentsSingle[0][5] = -2*y01; 
-		gComponentsSingle[1][1] = y01*y01 + 1 + x01*x01 - 2*x01; 
+		gComponentsSingle[0][0] = x01*x01 - 2*x01 + y01*y01 + 1; 
+		gComponentsSingle[2][0] = -2*x01*x01 + 2*x01 - 2*y01*y01; 
+		gComponentsSingle[3][0] = 2*y01; 
+		gComponentsSingle[4][0] = 2*x01 - 2; 
+		gComponentsSingle[5][0] = -2*y01; 
+		gComponentsSingle[1][1] = x01*x01 - 2*x01 + y01*y01 + 1; 
 		gComponentsSingle[1][2] = -2*y01; 
-		gComponentsSingle[1][3] = -2*y01*y01 - 2*x01*x01 + 2*x01; 
+		gComponentsSingle[1][3] = -2*x01*x01 + 2*x01 - 2*y01*y01; 
 		gComponentsSingle[1][4] = 2*y01; 
-		gComponentsSingle[1][5] = -2 + 2*x01; 
-		gComponentsSingle[2][2] = y01*y01 + x01*x01; 
-		gComponentsSingle[2][4] = -2*x01; 
-		gComponentsSingle[2][5] = 2*y01; 
-		gComponentsSingle[3][3] = y01*y01 + x01*x01; 
+		gComponentsSingle[1][5] = 2*x01 - 2; 
+		gComponentsSingle[2][2] = x01*x01 + y01*y01; 
+		gComponentsSingle[2][4] = -2*x01;
+		gComponentsSingle[2][5] = 2*y01;
+		gComponentsSingle[3][3] = x01*x01 + y01*y01; 
 		gComponentsSingle[3][4] = -2*y01; 
 		gComponentsSingle[3][5] = -2*x01; 
-		gComponentsSingle[4][4] = 1;
+		gComponentsSingle[4][4] = 1; 
 		gComponentsSingle[5][5] = 1;
 	}
 	// Helper method for populating the GMatrix 
@@ -235,6 +235,11 @@ public class MyPolygon extends Polygon {
 		}
 
 		gMatrix = new int[v.length][v.length];
+		for(int i=0; i<v.length; i++) {
+			for(int j=0; j<v.length; j++) {
+				gMatrix[i][j] = 0;
+			}
+		}
 		int[] vIdx = new int[3];
 		for(int i=0; i<numTriangles; i++) { 
 			// Get triangle vertex indices in v 
@@ -266,52 +271,84 @@ public class MyPolygon extends Polygon {
 
 	// Function for obtaining G' and B in scale-free construction 
 	public void getGPrimeInvB() {
-		int[][] gReorderY = new int[gMatrix.length - 2*numConstraints][gMatrix.length];
-		int currGReorderYRow = 0; 
-		int[][] gReorderYConstraints = new int[2*numConstraints][gMatrix.length];
-		int currGReorderYConstraintsRow = 0;
-		boolean isConstraint;
-		for(int i=0; i<gMatrix.length; i+=2) {
+		ArrayList<Integer> constraintIdx = new ArrayList<Integer>(); 
+		ArrayList<Integer> notConstraintIdx = new ArrayList<Integer>(); 
+		boolean isConstraint; 
+		for(int i=0; i<v.length; i+=2) { 
 			isConstraint = false; 
-			for(int j=0; j<numConstraints; j++) {
-				if(constraintX[j] == v[i] && constraintY[j] == v[i+1]) {
+			for(int j=0; j<numConstraints; j++) { 
+				if(v[i] == constraintX[j] && v[i+1] == constraintY[j]) {
 					isConstraint = true; 
-				}
+					break;
+				} 
 			}
 			if(isConstraint) {
-				for(int j=0; j<gMatrix.length; j++) {
-					gReorderYConstraints[currGReorderYConstraintsRow][j] = gMatrix[i][j];
-					gReorderYConstraints[currGReorderYConstraintsRow+1][j] = gMatrix[i+1][j];
-				}
-				currGReorderYConstraintsRow+=2; 
+				constraintIdx.add(i);
 			} else {
-				for(int j=0; j<gMatrix.length; j++) {
-					gReorderY[currGReorderYRow][j] = gMatrix[i][j];
-					gReorderY[currGReorderYRow+1][j] = gMatrix[i+1][j];
-				}
-				currGReorderYRow+=2;
+				notConstraintIdx.add(i); 
 			}
 		}
-		int[][] gReorderCombined = new int[gMatrix.length][gMatrix.length];
-		int currGReorderYCombineRow = 0; 
-		for(int i=0; i<gReorderY.length; i++) {
+
+		int[][] gReorderRow = new int[gMatrix.length][gMatrix.length]; 
+		for(int i=0; i<numConstraints; i++) {
 			for(int j=0; j<gMatrix.length; j++) {
-				gReorderCombined[currGReorderYCombineRow][j] = gReorderY[i][j];
+				gReorderRow[gMatrix.length - 2*numConstraints + i][j] = gMatrix[constraintIdx.get(i)][j];
+				gReorderRow[gMatrix.length - 2*numConstraints + i + 1][j] = gMatrix[constraintIdx.get(i) + 1][j];
 			}
-			currGReorderYCombineRow++;
 		}
-		for(int i=0; i<gReorderYConstraints.length; i++) {
+		int numFreeVariables = (gMatrix.length / 2) - numConstraints;
+		for(int i=0; i<numFreeVariables; i++) {
 			for(int j=0; j<gMatrix.length; j++) {
-				gReorderCombined[currGReorderYCombineRow][j] = gReorderYConstraints[i][j];
+				gReorderRow[i][j] = gMatrix[notConstraintIdx.get(i)][j];
+				gReorderRow[i + 1][j] = gMatrix[notConstraintIdx.get(i) + 1][j];
 			}
-			currGReorderYCombineRow++;
+		}
+		
+		int[][] gReorder = new int[gMatrix.length][gMatrix.length];
+		for(int i=0; i<gMatrix.length; i++) {
+			for(int j=0; j<numConstraints; j++) {
+				gReorder[i][gMatrix.length - 2*numConstraints + j] = gReorderRow[i][constraintIdx.get(j)];
+				gReorder[i][gMatrix.length - 2*numConstraints + j + 1] = gReorderRow[i][constraintIdx.get(j) + 1];
+			}
+		}
+		for(int i=0; i<gMatrix.length; i++) {
+			for(int j=0; j<numFreeVariables; j++) {
+				gReorder[i][j] = gReorderRow[i][notConstraintIdx.get(j)];
+				gReorder[i][j + 1] = gReorderRow[i][notConstraintIdx.get(j) + 1];
+			}
 		}
 
+		double[][] g00 = new double[gMatrix.length - 2*numConstraints][gMatrix.length - 2*numConstraints];
+		double[][] g10 = new double[2*numConstraints][gMatrix.length - 2*numConstraints];
+		double[][] g01 = new double[gMatrix.length - 2*numConstraints][2*numConstraints];
 
+		for(int i=0; i<gMatrix.length - 2*numConstraints; i++) {
+			for(int j=0; j<gMatrix.length - 2*numConstraints; j++) {
+				g00[i][j] = (double)gMatrix[i][j];
+			}
+		}
+		for(int i=0; i<2*numConstraints; i++) {
+			for(int j=0; j<gMatrix.length - 2*numConstraints; j++) {
+				g10[i][j] = (double)gMatrix[gMatrix.length - 2*numConstraints + i][j];
+			}
+		}
+		for(int i=0; i<gMatrix.length - 2*numConstraints; i++) {
+			for(int j=0; j<2*numConstraints; j++) {
+				g01[i][j] = (double)gMatrix[i][gMatrix.length - 2*numConstraints + j];
+			}
+		}
 
-
+		Matrix g00Matrix = new Matrix(g00);
+		Matrix g10Matrix = new Matrix(g10);
+		Matrix g01Matrix = new Matrix(g01);
+		
+		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
+		Matrix b = g01Matrix.plus(g10Matrix.transpose());
+		b = b.times(-1);
+		Matrix gPrimeInv = gPrime.inverse(); 
+		gPrimeInvB = gPrimeInv.times(b);
 	}
-
+	
 	// Calculating new coordinates 
 	public void shapeManipulate() {
 		//System.out.println(gPrimeInvB.getRowDimension() + ", " + gPrimeInvB.getColumnDimension());
