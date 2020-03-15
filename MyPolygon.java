@@ -291,8 +291,7 @@ public class MyPolygon extends Polygon {
 			nRow++; 
 		}
 		//System.out.println(vertMap.size());
-		//System.out.println(initialVertices.length);
-				
+		//System.out.println(initialVertices.length);	
 
 		// Build vector for computing the G matrix 
 		int[] vVector = new int[2*numVertices];
@@ -353,6 +352,7 @@ public class MyPolygon extends Polygon {
 					(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1])
 					*(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1]));
 				
+				/*
 				double dTest = 
 				(1 - 2*x + (x*x) + (y*y))*(vVector[n0x]*vVector[n0x]) +
 				(1 - 2*x + (x*x) + (y*y))*(vVector[n0y]*vVector[n0y]) + 
@@ -366,23 +366,24 @@ public class MyPolygon extends Polygon {
 				vVector[n0x]*((2*x - 2*(x*x) - 2*(y*y))*vVector[n1x] + 2*y*vVector[n1y] + (-2 + 2*x)*vVector[n2x] - 
 				2*y*vVector[n2y]) + vVector[n1x]*(-2*x*vVector[n2x] + 2*y*vVector[n2y]);
 				System.out.println("TEST: " + dTest);
+				*/
 
 				gMatrix[n0x][n0x] += 1 - 2*x + x*x + y*y;
-				gMatrix[n1x][n0x] += 2*x - 2*x*x - 2*y*y; //gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
-				gMatrix[n1y][n0x] += 2*y; //gMatrix[n0x][n1y] += 2*y;						
-				gMatrix[n2x][n0x] += -2 + 2*x; //gMatrix[n0x][n2x] += -2 + 2*x;					
-				gMatrix[n2y][n0x] += -2 * y; //gMatrix[n0x][n2y] += -2 * y;	
+				gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
+				gMatrix[n0x][n1y] += 2*y;						
+				gMatrix[n0x][n2x] += -2 + 2*x;					
+				gMatrix[n0x][n2y] += -2 * y;	
 				gMatrix[n0y][n0y] += 1 - 2*x + x*x + y*y;
-				gMatrix[n1x][n0y] += -2*y; //gMatrix[n0y][n1x] += -2*y;						
-				gMatrix[n1y][n0y] += 2*x - 2*x*x - 2*y*y; //gMatrix[n0y][n1y] += 2*x - 2*x*x - 2*y*y;		
-				gMatrix[n2x][n0y] += 2*y; //gMatrix[n0y][n2x] += 2*y;						
-				gMatrix[n2y][n0y] += -2 + 2*x; //gMatrix[n0y][n2y] += -2 + 2*x;	
+				gMatrix[n0y][n1x] += -2*y;						
+				gMatrix[n0y][n1y] += 2*x - 2*x*x - 2*y*y;		
+				gMatrix[n0y][n2x] += 2*y;						
+				gMatrix[n0y][n2y] += -2 + 2*x;	
 				gMatrix[n1x][n1x] += x*x + y*y;
-				gMatrix[n2x][n1x] += -2*x; //gMatrix[n1x][n2x] += -2*x;						
-				gMatrix[n2y][n1x] += 2*y; //gMatrix[n1x][n2y] += 2*y;	
+				gMatrix[n1x][n2x] += -2*x;						
+				gMatrix[n1x][n2y] += 2*y;	
 				gMatrix[n1y][n1y] += x*x + y*y;
-				gMatrix[n2x][n1y] += -2*y; //gMatrix[n1y][n2x] += -2*y;						
-				gMatrix[n2y][n1y] += -2*x; //gMatrix[n1y][n2y] += -2*x;	
+				gMatrix[n1y][n2x] += -2*y;						
+				gMatrix[n1y][n2y] += -2*x;	
 				gMatrix[n2x][n2x] += 1;
 				gMatrix[n2y][n2y] += 1;
 
