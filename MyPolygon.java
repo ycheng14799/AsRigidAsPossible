@@ -353,6 +353,19 @@ public class MyPolygon extends Polygon {
 					(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1])
 					*(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1]));
 				
+				double dTest = 
+				(1 - 2*x + (x*x) + (y*y))*(vVector[n0x]*vVector[n0x]) +
+				(1 - 2*x + (x*x) + (y*y))*(vVector[n0y]*vVector[n0y]) + 
+				((x*x) + (y*y))*(vVector[n1x]*vVector[n1x]) + 
+				((x*x) + (y*y))*(vVector[n1y]*vVector[n1y]) + 
+				(vVector[n2x]*vVector[n2x]) + (vVector[n2y]*vVector[n2y]) + 
+				vVector[n1y]*(-2*y*vVector[n2x] - 2*x*vVector[n2y]) + 
+				vVector[n0y]*(-2*y*vVector[n1x] + (2*x - 2*(x*x) - 2*(y*y))*vVector[n1y] + 
+				2*y*vVector[n2x] + 
+				(-2 + 2*x)*vVector[n2y]) + 
+				vVector[n0x]*((2*x - 2*(x*x) - 2*(y*y))*vVector[n1x] + 2*y*vVector[n1y] + (-2 + 2*x)*vVector[n2x] - 
+				2*y*vVector[n2y]) + vVector[n1x]*(-2*x*vVector[n2x] + 2*y*vVector[n2y]);
+				System.out.println("TEST: " + dTest);
 
 				gMatrix[n0x][n0x] += 1 - 2*x + x*x + y*y;
 				gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
