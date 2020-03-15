@@ -219,8 +219,9 @@ public class MyPolygon extends Polygon {
 				triangleLocal[i][j][1] = fy; 
 
 				// Sanity check 
-				System.out.println(v0[0] + fx*v01[0] + fy*v01Rot90[0] - v2[0]);
-				System.out.println(v0[1] + fx*v01[1] + fy*v01Rot90[1] - v2[1]);
+				System.out.println("In initializeMesh(). Check validity of fx and fy computation");
+				System.out.println("Difference: " + ((v0[0] + fx*v01[0] + fy*v01Rot90[0] - v2[0])*(v0[0] + fx*v01[0] + fy*v01Rot90[0] - v2[0]) +
+				(v0[1] + fx*v01[1] + fy*v01Rot90[1] - v2[1])*(v0[1] + fx*v01[1] + fy*v01Rot90[1] - v2[1])));
 			}
 		}
 	}
@@ -322,6 +323,7 @@ public class MyPolygon extends Polygon {
 		int[] v0 = new int[2], v1 = new int[2], v2 = new int[2];
 		int[] v01 = new int[2], v01Rot90 = new int[2];
 		int[] v02 = new int[2];
+		double v0x, v0y, v1x, v1y, v2x, v2y;
 		for(int i=0; i<numTriangles; i++) {
 			Polygon triangle = triangles[i]; 
 			double triangleError = 0; 
@@ -336,7 +338,7 @@ public class MyPolygon extends Polygon {
 				y = triangleLocal[i][j][1];
 
 				
-				System.out.println("Sanity Check");
+				System.out.println("In calcStepOneMatrix(). Check validity of x and y values.");
 				v0[0] = vVector[n0x];
 				v0[1] = vVector[n0y];
 				v1[0] = vVector[n1x];
@@ -347,11 +349,46 @@ public class MyPolygon extends Polygon {
 				v01[1] = v1[1] - v0[0];
 				v01Rot90[0] = v01[1];
 				v01Rot90[1] = -v01[0];
-				System.out.println((v0[0] + x*v01[0] + y*v01Rot90[0] - v2[0])
+				System.out.println("Error for Vertex: " + ((v0[0] + x*v01[0] + y*v01Rot90[0] - v2[0])
 					*(v0[0] + x*v01[0] + y*v01Rot90[0] - v2[0]) + 
 					(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1])
-					*(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1]));
+					*(v0[1] + x*v01[1] + y*v01Rot90[1] - v2[1])));
+				System.out.println(" ");
 				
+				System.out.println("In calcStepOneMatrix(). Error equation check.");
+				v0x = (double)v0[0];
+				v0y = (double)v0[1];
+				v1x = (double)v1[0];
+				v1y = (double)v1[1];
+				v2x = (double)v2[0];
+				v2y = (double)v2[1];
+
+				double vertexError = 0.0; 
+				vertexError += (v0x + x*(v1x-v0x) + y*(v1y-v0y) - v2x)*(v0x + x*(v1x-v0x) + y*(v1y-v0y) - v2x);
+				vertexError += (v0y + x*(v1y-v0y) + y*(v0x-v1x) - v2y)*(v0y + x*(v1y-v0y) + y*(v0x-v1x) - v2y);
+				System.out.println("Vertex Error: " + vertexError);
+				vertexError = 0.0;
+				vertexError += v0x*v0x*(x*x - 2*x + y*y + 1);
+				vertexError += v0x*v1x*(-2*x*x + 2*x - 2*y*y);
+				vertexError += v0x*v0y*(2*y);
+				vertexError += v0x*v2x*(2*x - 2);
+				vertexError += v0x*v2y*(-2*y);
+				vertexError += v0y*v0y*(x*x - 2*x + y*y + 1);
+				vertexError += v0y*v1x*(-2*y);
+				vertexError += v0y*v1y*(-2*x*x + 2*x - 2*y*y);
+				vertexError += v0y*v2x*(2*y);
+				vertexError += v0y*v2y*(2*x - 2);
+				vertexError += v1x*v1x*(x*x + y*y);
+				vertexError += v1x*v2x*(-2*x);
+				vertexError += v1x*v2y*(2*y);
+				vertexError += v1y*v1y*(x*x + y*y);
+				vertexError += v1y*v2x*(-2*y);
+				vertexError += v1y*v2y*(-2*x);
+				vertexError += v2x*v2x;
+				vertexError += v2y*v2y;
+				System.out.println("Vertex Error: " + vertexError);
+				System.out.println(" ");
+
 				/*
 				double dTest = 
 				(1 - 2*x + (x*x) + (y*y))*(vVector[n0x]*vVector[n0x]) +
@@ -368,6 +405,7 @@ public class MyPolygon extends Polygon {
 				System.out.println("TEST: " + dTest);
 				*/
 
+				/*
 				gMatrix[n0x][n0x] += 1 - 2*x + x*x + y*y;
 				gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
 				gMatrix[n0x][n1y] += 2*y;						
@@ -404,6 +442,7 @@ public class MyPolygon extends Polygon {
 				triangleError += (-2*y)                 * vVector[n1y] * vVector[n2x];
 				triangleError += (-2*x)                 * vVector[n1y] * vVector[n2y];
 				triangleError += vVector[n2x] * vVector[n2x]  +  vVector[n2y] * vVector[n2y] ;
+				*/
 			}
 			System.out.println("Triangle Error: " + triangleError);
 		}
@@ -418,7 +457,7 @@ public class MyPolygon extends Polygon {
 		Matrix error = vMatrix.transpose().times(g.times(vMatrix));
 		System.out.println(error.getArrayCopy()[0][0]);
 		*/
-
+		/*
 		// Extract g00, g10, g01
 		double[][] g00 = new double[2*numFreeVars][2*numFreeVars];
 		double[][] g10 = new double[2*numConstraints][2*numFreeVars];
@@ -467,7 +506,7 @@ public class MyPolygon extends Polygon {
 				", " + freeVarResult[2*i + 1][0]);
 			
 		}
-
+		*/
 	}
 	
 
