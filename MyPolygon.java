@@ -206,7 +206,7 @@ public class MyPolygon extends Polygon {
 				v2[1] = triangles[i].ypoints[n2];
 
 				v01[0] = v1[0] - v0[0];
-				v01[1] = v1[1] - v0[0];
+				v01[1] = v1[1] - v0[1];
 				v01Rot90[0] = v01[1];
 				v01Rot90[1] = -v01[0];
 
@@ -346,7 +346,7 @@ public class MyPolygon extends Polygon {
 				v2[0] = vVector[n2x];
 				v2[1] = vVector[n2y];
 				v01[0] = v1[0] - v0[0];
-				v01[1] = v1[1] - v0[0];
+				v01[1] = v1[1] - v0[1];
 				v01Rot90[0] = v01[1];
 				v01Rot90[1] = -v01[0];
 				System.out.println("Error for Vertex: " + ((v0[0] + x*v01[0] + y*v01Rot90[0] - v2[0])
@@ -363,10 +363,39 @@ public class MyPolygon extends Polygon {
 				v2x = (double)v2[0];
 				v2y = (double)v2[1];
 
+				/*
+				System.out.println("v0[0]: " + v0[0]);
+				System.out.println("v0x: " + v0x);
+				System.out.println("v0[1]: " + v0[1]);
+				System.out.println("v0y: " + v0y);
+				System.out.println("v1[0]: " + v1[0]);
+				System.out.println("v1x: " + v1x);
+				System.out.println("v1[1]: " + v1[1]);
+				System.out.println("v1y: " + v1y);
+				System.out.println("v2[0]: " + v2[0]);
+				System.out.println("v2x: " + v2x);
+				System.out.println("v2[1]: " + v2[1]);
+				System.out.println("v2y: " + v2y);
+				
+				System.out.println("v01[0]: " + v01[0]);
+				System.out.println("(v1x-v0x): " + (v1x-v0x));
+				System.out.println("v01[1]: " + v01[1]);
+				System.out.println("(v1y-v0y): " + (v1y-v0y));
+				
+				System.out.println("v01Rot90[0]: " + v01Rot90[0]);
+				System.out.println("(v1y-v0y): " + (v1y-v0y));
+				System.out.println("v01Rot90[1]: " + v01Rot90[1]);
+				System.out.println("(v0x-v1x): " + (v0x-v1x));
+				*/
+
+
+				
 				double vertexError = 0.0; 
 				vertexError += (v0x + x*(v1x-v0x) + y*(v1y-v0y) - v2x)*(v0x + x*(v1x-v0x) + y*(v1y-v0y) - v2x);
 				vertexError += (v0y + x*(v1y-v0y) + y*(v0x-v1x) - v2y)*(v0y + x*(v1y-v0y) + y*(v0x-v1x) - v2y);
 				System.out.println("Vertex Error: " + vertexError);
+				
+				/*
 				vertexError = 0.0;
 				vertexError += v0x*v0x*(x*x - 2*x + y*y + 1);
 				vertexError += v0x*v1x*(-2*x*x + 2*x - 2*y*y);
@@ -386,9 +415,11 @@ public class MyPolygon extends Polygon {
 				vertexError += v1y*v2y*(-2*x);
 				vertexError += v2x*v2x;
 				vertexError += v2y*v2y;
+				
 				System.out.println("Vertex Error: " + vertexError);
 				System.out.println(" ");
-
+				*/
+				
 				/*
 				double dTest = 
 				(1 - 2*x + (x*x) + (y*y))*(vVector[n0x]*vVector[n0x]) +
@@ -405,7 +436,7 @@ public class MyPolygon extends Polygon {
 				System.out.println("TEST: " + dTest);
 				*/
 
-				/*
+				
 				gMatrix[n0x][n0x] += 1 - 2*x + x*x + y*y;
 				gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
 				gMatrix[n0x][n1y] += 2*y;						
@@ -442,71 +473,58 @@ public class MyPolygon extends Polygon {
 				triangleError += (-2*y)                 * vVector[n1y] * vVector[n2x];
 				triangleError += (-2*x)                 * vVector[n1y] * vVector[n2y];
 				triangleError += vVector[n2x] * vVector[n2x]  +  vVector[n2y] * vVector[n2y] ;
-				*/
+				
 			}
 			System.out.println("Triangle Error: " + triangleError);
 		}
 		// Sanity Check 
 		/*
-		Matrix g = new Matrix(gMatrix);
-		double v[][] = new double[vVector.length][1];
+		Matrix sanityG = new Matrix(gMatrix);
+		double sanityV[][] = new double[vVector.length][1];
 		for(int i=0; i<vVector.length; i++) {
-			v[i][0] = vVector[i];
+			sanityV[i][0] = vVector[i];
 		}
-		Matrix vMatrix = new Matrix(v);
-		Matrix error = vMatrix.transpose().times(g.times(vMatrix));
-		System.out.println(error.getArrayCopy()[0][0]);
+		Matrix sanityVMatrix = new Matrix(sanityV);
+		Matrix error = sanityVMatrix.transpose().times(sanityG.times(sanityVMatrix));
+		System.out.println(" ");
+		System.out.println("Total Error from Matrix Mult: " + error.getArrayCopy()[0][0]);
+		System.out.println(" ");
 		*/
-		/*
-		// Extract g00, g10, g01
-		double[][] g00 = new double[2*numFreeVars][2*numFreeVars];
-		double[][] g10 = new double[2*numConstraints][2*numFreeVars];
-		double[][] g01 = new double[2*numFreeVars][2*numConstraints];
 
-		for(int i=0; i<2*numFreeVars; i++) {
-			for(int j=0; j<2*numFreeVars; j++) {
-				g00[i][j] = gMatrix[i][j];
-			}
-		}
-		for(int i=0; i<2*numConstraints; i++) {
-			for(int j=0; j<numFreeVars; j++) {
-				g10[i][j] = gMatrix[numFreeVars + i][j];
-			}
-		}
-		for(int i=0; i<numFreeVars; i++) {
-			for(int j=0; j<2*numConstraints; j++) {
-				g01[i][j] = gMatrix[i][numFreeVars + j];
-			}
-		}
-		Matrix g00Matrix = new Matrix(g00);
-		Matrix g10Matrix = new Matrix(g10);
-		Matrix g01Matrix = new Matrix(g01);
-		
-		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
-		Matrix b = g01Matrix.plus(g10Matrix.transpose());
-		Matrix gPrimeInv = gPrime.inverse(); 
-		gPrimeInvB = gPrimeInv.times(b);
-		gPrimeInvB = gPrimeInvB.times(-1);
+		System.out.println("Num Free Var: " + numFreeVars);
+		System.out.println("Num Constraints: " + numConstraints);
+		Matrix g = new Matrix(gMatrix);
+		Matrix g00 = g.getMatrix(0, 2*numFreeVars-1, 0, 2*numFreeVars-1);
+		Matrix g01 = g.getMatrix(0, 2*numFreeVars-1, 2*numFreeVars, 2*numVertices-1);
+		Matrix g10 = g.getMatrix(2*numFreeVars, 2*numVertices-1, 0, 2*numFreeVars-1);
+		// Compute GPrime 
+		Matrix gPrime = g00.plus(g00.transpose());
+		Matrix b = g01.plus(g10.transpose());
+		Matrix gPrimeInv = gPrime.inverse();
+		Matrix finalMatrix = gPrimeInv.times(b);
+		finalMatrix = finalMatrix.times(-1);
 
-		double q[][] = new double[2*numConstraints][1];
+		// Sanity check 
+		System.out.println("Final Matrix Dimensions: " + finalMatrix.getRowDimension() + 
+			", " + finalMatrix.getColumnDimension());
+		// Constraints 
+		double[][] qVec = new double[2*numConstraints][1];
 		for(int i=0; i<2*numConstraints; i++) {
-			q[i][0] = vVector[numFreeVars+i];
+			qVec[i][0] = vVector[2*numFreeVars + i];
 		}
-		Matrix qMatrix = new Matrix(q);
-		System.out.println(qMatrix.getRowDimension() + ", " +
-			qMatrix.getColumnDimension());
-		System.out.println(gPrimeInvB.getRowDimension() + ", " +
-			gPrimeInvB.getColumnDimension());
-		Matrix freeVarMatrix = gPrimeInvB.times(qMatrix);
-		double[][] freeVarResult = freeVarMatrix.getArrayCopy();
-		for(int i=0; i<numFreeVars; i++) {
-			System.out.println(vVector[2*i] + 
-					", " + vVector[2*i + 1]);
-			System.out.println(freeVarResult[2*i][0] + 
-				", " + freeVarResult[2*i + 1][0]);
-			
+		Matrix qVecMat = new Matrix(qVec);
+		Matrix results = finalMatrix.times(qVecMat);
+		System.out.println("Results dimensions: " + 
+			results.getRowDimension() + 
+			", " + results.getColumnDimension());
+		for(int i=0; i<2*numFreeVars; i+=2) {
+			System.out.println("Original: " + 
+				vVector[i] + ", " + 
+				vVector[i+1]); 
+			System.out.println("Result: " + 
+				results.get(i,0)+ ", " + 
+				results.get(i+1,0)); 
 		}
-		*/
 	}
 	
 
