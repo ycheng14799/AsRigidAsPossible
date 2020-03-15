@@ -501,10 +501,12 @@ public class MyPolygon extends Polygon {
 		Matrix gPrime = g00.plus(g00.transpose());
 		Matrix b = g01.plus(g10.transpose());
 		Matrix gPrimeInv = gPrime.inverse();
-		Matrix finalMatrix = gPrimeInv.times(b);
-		finalMatrix = finalMatrix.times(-1);
+		gPrimeInvB = gPrimeInv.times(b);
+		gPrimeInvB = gPrimeInvB.times(-1);
+
 
 		// Sanity check 
+		/*
 		System.out.println("Final Matrix Dimensions: " + finalMatrix.getRowDimension() + 
 			", " + finalMatrix.getColumnDimension());
 		// Constraints 
@@ -525,6 +527,7 @@ public class MyPolygon extends Polygon {
 				results.get(i,0)+ ", " + 
 				results.get(i+1,0)); 
 		}
+		*/
 	}
 	
 
