@@ -1,21 +1,32 @@
 import java.awt.*;
 import Jama.*; 
 import java.util.ArrayList;
+import java.util.HashMap;
+
 
 public class MyPolygon extends Polygon {
+	// For triangulation 
 	public Polygon[] triangles;
 	public int[] tempX = new int[3];
 	public int[] tempY = new int[3];
 	public int numTriangles; 
 	public boolean triangulated = false; 
-	public int[][] gComponentsSingle = new int[6][6];
-	public int[] constraintX = new int[3];
-	public int[] constraintY = new int[3]; 
-	public int numConstraints = 0; 
-	public int[][] gMatrix; 
-	public int[] v;
-	public Matrix gPrimeInvB;
-	public int[] newPos; 
+
+	// Mesh 
+	public int[][] initialVertices; 
+	public int[][] deformedVertices; 
+	public int numVertices;
+	public ArrayList<Integer> constrainedIdx; 
+	public double[][][] triangleLocal; // Vertices in triangle local coordinates
+
+	// public int[][] gComponentsSingle = new int[6][6];
+	// public int[] constraintX = new int[3];
+	// public int[] constraintY = new int[3]; 
+	// public int numConstraints = 0; 
+	// public int[][] gMatrix; 
+	// public int[] v;
+	// public Matrix gPrimeInvB;
+	// public int[] newPos; 
 
 	private void resizeTriangles(int num) {
 		assert(tempX.length == tempY.length); 
@@ -33,6 +44,7 @@ public class MyPolygon extends Polygon {
 		assert(tempX.length == tempY.length);
 	}
 
+	/*
 	private void resizeConstraints(int num) {
 		assert(constraintX.length == constraintY.length);
 		while(num > constraintX.length) {
@@ -49,9 +61,25 @@ public class MyPolygon extends Polygon {
 		}
 		assert(constraintX.length == constraintY.length);
 	}
+	*/
 
 	public MyPolygon() {}
 	public MyPolygon(int x[], int y[], int n) {}
+
+	// Left 
+	public boolean left(int ax, int ay, int bx, int by, int cx, int cy) {
+		return (bx - ax)*(cy - ay) - (cx - ax)*(by - ay) < 0;
+	}
+
+	// Dot 
+	public int DotProd(int[] x, int[] y) {
+		return (x[0]*y[0]) + (x[1]*y[1]);
+	}
+
+	// Square length 
+	public double squareLength(int[] vec) {
+		return ((double)vec[0]*vec[0]) + ((double)vec[1]*vec[1]);
+	}
 
 	// O(n^4) implementation 
 	public void triangulate() {
@@ -119,34 +147,206 @@ public class MyPolygon extends Polygon {
 		triangulated = true; 
 	}
 
-	public int[] addConstraint(int x, int y) {
-		int pointX, pointY, distToPoint; 
+	// Initialize from Mesh
+	public void initializeMesh() {
+		constrainedIdx = new ArrayList<Integer>();
+		constrainedIdx.clear();
 
-		for(int i=0; i<numConstraints; i++) {
-			distToPoint = (constraintX[i] - x)*(constraintX[i] - x) + (constraintY[i] - y)*(constraintY[i] - y); 
-			if(distToPoint < 25) {
-				return new int[]{0, 0, 0};
-			}
-		}
-		for(int i=0; i<triangles.length; i++) {
-			for(int j=0; j<triangles[i].npoints; j++){
-				pointX = triangles[i].xpoints[j];
-				pointY = triangles[i].ypoints[j];
-				distToPoint = (pointX - x)*(pointX - x) + (pointY - y)*(pointY - y); 
-				if(distToPoint < 25) {
-					numConstraints++; 
-					resizeConstraints(numConstraints);
-					constraintX[numConstraints-1] = pointX;
-					constraintY[numConstraints-1] = pointY;
-					System.out.println("New Constraint: (" + pointX + ", " + pointY + ")");
-
-					return new int[]{1, pointX, pointY};
+		// Copy vertices 
+		ArrayList<int[]> verts = new ArrayList<int[]>(); 
+		boolean inVerts; 
+		numVertices = 0; 
+		for(int i=0; i<numTriangles; i++) { 
+			Polygon triangle = triangles[i]; 
+			for(int j=0; j<3; j++) {
+				inVerts = false;
+				for(int k=0; k<numVertices; k++) {
+					if(triangle.xpoints[j] == verts.get(k)[0] && 
+						triangle.ypoints[j] == verts.get(k)[1]) {
+						inVerts = true; 
+						break;
+					}
+				}
+				if(!inVerts) {
+					verts.add(new int[]{triangle.xpoints[j], triangle.ypoints[j]});
+					numVertices++;
 				}
 			}
 		}
+		initialVertices = new int[numVertices][2];
+		deformedVertices = new int[numVertices][2];
+		for(int i=0; i<numVertices; i++) { 
+			int[] aVertex = verts.get(i);
+			initialVertices[i][0] = aVertex[0];
+			initialVertices[i][1] = aVertex[1];
+			deformedVertices[i][0] = aVertex[0];
+			deformedVertices[i][1] = aVertex[1];
+		}
+
+		// Triangle in local coodinates 
+		triangleLocal = new double[numTriangles][3][2]; 
+		int n0, n1, n2; 
+		int[] v0 = new int[2], v1 = new int[2], v2 = new int[2];
+		int[] v01 = new int[2], v01Rot90 = new int[2];
+		int[] v02 = new int[2];
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<3; j++) {
+				n0 = j; 
+				n1 = (j+1)%3;
+				n2 = (j+2)%3; 
+
+				v0[0] = triangles[i].xpoints[0];
+				v0[1] = triangles[i].ypoints[0];
+				v1[0] = triangles[i].xpoints[1];
+				v1[1] = triangles[i].ypoints[1];
+				v2[0] = triangles[i].xpoints[2];
+				v2[1] = triangles[i].ypoints[2];
+
+				v01[0] = v1[0] - v0[0];
+				v01[1] = v1[1] - v0[0];
+				v01Rot90[0] = v01[1];
+				v01Rot90[1] = -v01[0];
+
+				v02[0] = v2[0] - v0[0];
+				v02[1] = v2[1] - v0[1];
+
+				double fx = (double)DotProd(v02, v01) / squareLength(v01);
+				double fy = (double)DotProd(v02, v01Rot90) / squareLength(v01Rot90);
+				triangleLocal[i][j][0] = fx; 
+				triangleLocal[i][j][1] = fy; 
+
+				// Sanity check 
+				System.out.println(v0[0] + fx*v01[0] + fy*v01Rot90[0] - v2[0]);
+				System.out.println(v0[1] + fx*v01[1] + fy*v01Rot90[1] - v2[1]);
+			}
+		}
+	}
+
+
+	public int[] addConstraint(int x, int y) {
+		int distToPoint;
+		int[] aConstraint; 
+		for(int i=0; i<constrainedIdx.size(); i++) {
+			aConstraint = deformedVertices[constrainedIdx.get(i)]; 
+			distToPoint = (aConstraint[0]-x)*(aConstraint[0]-x) +
+				(aConstraint[1]-y)*(aConstraint[1]-y);
+			if(distToPoint < 25) {
+				return new int[]{0, 0, 0}; 
+			}
+		}
+		for(int i=0; i<numVertices; i++) { 
+			distToPoint = (deformedVertices[i][0]-x)*(deformedVertices[i][0]-x) +
+				(deformedVertices[i][1]-y)*(deformedVertices[i][1]-y);
+			if(distToPoint < 25) {
+				constrainedIdx.add(i);
+				return new int[]{1, deformedVertices[i][0], deformedVertices[i][1]}; 
+			}
+		}
+
 		return new int[]{0, 0, 0};
 	}
 
+	public void calcStepOneMatrix() { 
+		double[][] gMatrix = new double[2*numVertices][2*numVertices];
+		// Zero 
+		for(int i=0; i<2*numVertices; i++) {
+			for(int j=0; j<2*numVertices; j++) {
+				gMatrix[i][j] = 0.0;
+			}
+		}
+
+		// Number of constraints 
+		int numConstraints = constrainedIdx.size(); 
+		int numFreeVars = numVertices - numConstraints;
+
+		// Figure out vertex ordering 
+		HashMap<XYKey, Integer> vertMap = new HashMap<XYKey, Integer>();
+
+		boolean isConstraint; 
+		int nRow = 0; 
+		for(int i=0; i<numVertices; i++) {
+			isConstraint = false; 
+			for(int j=0; j<numConstraints; j++) {
+				if(constrainedIdx.get(j) == i) {
+					isConstraint = true; 
+					break;
+				}
+			}
+			if(!isConstraint) {
+				//System.out.println(i);
+				//System.out.println(initialVertices[i][0] + ", " + initialVertices[i][1]);
+				vertMap.put(new XYKey(initialVertices[i][0],initialVertices[i][1]), nRow);
+				nRow++; 
+			} 
+		}
+		for(int i=0; i<numConstraints; i++) {
+			//System.out.println(constrainedIdx.get(i));
+			//System.out.println(initialVertices[constrainedIdx.get(i)][0] +
+			//	", " + initialVertices[constrainedIdx.get(i)][1]);
+			vertMap.put(new XYKey(initialVertices[constrainedIdx.get(i)][0], 
+				initialVertices[constrainedIdx.get(i)][1]), nRow);
+			nRow++; 
+		}
+		//System.out.println(vertMap.size());
+		//System.out.println(initialVertices.length);
+				
+
+		// Build vector for computing the G matrix 
+		int[] vVector = new int[2*numVertices];
+		for(int i=0; i<numVertices; i++) {
+			isConstraint = false; 
+			for(int j=0; j<constrainedIdx.size(); j++) {
+				if(i == constrainedIdx.get(j)) {
+					isConstraint = true; 
+					break; 
+				}
+			} 
+			if(!isConstraint) {
+				int rowInVec = vertMap.get(new XYKey(initialVertices[i][0], initialVertices[i][1]));
+				vVector[2*rowInVec] = initialVertices[i][0];
+				vVector[2*rowInVec + 1] = initialVertices[i][1]; 
+			}
+		}
+		for(int i=0; i<numConstraints; i++) {
+			int rowInVec = vertMap.get(
+				new XYKey(initialVertices[constrainedIdx.get(i)][0], initialVertices[constrainedIdx.get(i)][1]));
+			vVector[2*rowInVec] = initialVertices[constrainedIdx.get(i)][0];
+			vVector[2*rowInVec + 1] = initialVertices[constrainedIdx.get(i)][1]; 
+		}
+
+		// Build the G Matrix 
+		int n0x, n0y, n1x, n1y, n2x, n2y; 
+		double x, y; 
+		for(int i=0; i<numTriangles; i++) {
+			Polygon triangle = triangles[i]; 
+			for(int j=0; j<3; j++) {
+				n0x = 2 * vertMap.get(new XYKey(triangle.xpoints[j], triangle.ypoints[j]));
+				n0y = n0x + 1; 
+				n1x = 2 * vertMap.get(new XYKey(triangle.xpoints[(j+1)%3], triangle.ypoints[(j+1)%3]));
+				n1y = n1x + 1; 
+				n2x = 2 * vertMap.get(new XYKey(triangle.xpoints[(j+2)%3], triangle.ypoints[(j+2)%3]));
+				n2y = n2x + 1; 
+				x = triangleLocal[i][j][0];
+				y = triangleLocal[i][j][1];
+				System.out.println(n0x);
+				System.out.println(n1x);
+				System.out.println(n2x);
+
+				// Sanity check 
+				int[] v0 = new int[]{vVector[n0x], vVector[n0y]};
+				int[] v1 = new int[]{vVector[n1x], vVector[n1y]};
+				int[] v2 = new int[]{vVector[n2x], vVector[n2y]};
+				int[] v01 = new int[]{v1[0] - v0[0], v1[1] - v0[1]};
+				int[] v01Perp = new int[]{v01[1], -v01[0]};
+				
+				
+			}
+		}
+
+	}
+	
+
+	/*
 	public int[] setConstraintActive(int x, int y) {
 		int distToPoint; 
 		for(int i=0; i<numConstraints; i++) {
@@ -157,6 +357,7 @@ public class MyPolygon extends Polygon {
 		}
 		return new int[]{0, 0};
 	}
+	
 
 	// Precompute components for scale-free manipulation
 	// Step One in Igarashi et. al's paper
@@ -371,4 +572,5 @@ public class MyPolygon extends Polygon {
 			System.out.println("New: " + (int)newPosDouble[i][0] + ", " + (int)newPosDouble[i+1][0]);
 		}
 	}
+	*/
 }

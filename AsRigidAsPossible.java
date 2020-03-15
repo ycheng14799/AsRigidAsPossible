@@ -70,6 +70,7 @@ public class AsRigidAsPossible extends Applet {
 				Graphics g = getGraphics();
 				// Triangulate
 				myG.triangulate(g);
+				myG.initializeMesh();
 				g.setPaintMode();
 			}
 		});
@@ -116,7 +117,8 @@ public class AsRigidAsPossible extends Applet {
 					g.setColor(paintColor);
 					myG.addVertex(g, x, y);
 					g.setPaintMode(); 
-				} else if(!cAnimate.getState()) {
+				} 
+				else if(!cAnimate.getState()) {
 					Graphics g = getGraphics(); 
 					g.setColor(constraintColor);
 					myG.addConstraint(g, x, y);
@@ -124,6 +126,7 @@ public class AsRigidAsPossible extends Applet {
 				}
 			}
 			public void mousePressed(MouseEvent e) {
+				/*
 				if(cAnimate.getState()) {
 					int x = e.getX();
 					int y = e.getY();
@@ -132,14 +135,17 @@ public class AsRigidAsPossible extends Applet {
 						manipulatingShape = true; 
 					}
 				}
+				*/
 			}
 			public void mouseReleased(MouseEvent e) {
+				/*
 				if(cAnimate.getState() && manipulatingShape) {
 					int x = e.getX();
 					int y = e.getY();
 					myG.manipulateShape(activeConstraintIdx, x, y);
 					manipulatingShape = false;
 				}
+				*/
 			}
 		});
 

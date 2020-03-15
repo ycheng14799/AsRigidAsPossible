@@ -55,8 +55,10 @@ public class MyGraphics {
 		}
 		g.setColor(paintColor); 
 		redrawPolygon(g);
-		System.out.println("Calculating G");
-		thePoly.calcGMatrix();
+	}
+
+	public void initializeMesh() {
+		thePoly.initializeMesh();
 	}
 
 	public void addVertex(Graphics g, int x, int y) {
@@ -81,21 +83,23 @@ public class MyGraphics {
 		thePoly.addPoint(x,y);
 		drawPoint(g, x, y);
 	}
-
+	
 	// Set vertex constraint
 	public void addConstraint(Graphics g, int x, int y) {
 		int[] constrainedPoint = thePoly.addConstraint(x, y); 
+		
 		if(constrainedPoint[0] == 1) {
 			drawPoint(g, constrainedPoint[1], constrainedPoint[2]);
 		}
 	}
 
+	
 	// Compute components for shape manipulation 
 	public void preComputeForManipulation() {
-		thePoly.getGPrimeInvB();
-
+		thePoly.calcStepOneMatrix();
 	}
 
+	/*
 	// Get active point for shape manipulation
 	public int[] setConstraintActive(int x, int y) {
 		return thePoly.setConstraintActive(x, y);
@@ -107,6 +111,7 @@ public class MyGraphics {
 		thePoly.constraintY[idx] = newY;
 		thePoly.shapeManipulate();
 	}
+	*/
 
 	// Drawing a point 
 	public void drawPoint(Graphics g, int x, int y) {
