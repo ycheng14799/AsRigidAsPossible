@@ -368,21 +368,21 @@ public class MyPolygon extends Polygon {
 				System.out.println("TEST: " + dTest);
 
 				gMatrix[n0x][n0x] += 1 - 2*x + x*x + y*y;
-				gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
-				gMatrix[n0x][n1y] += 2*y;						
-				gMatrix[n0x][n2x] += -2 + 2*x;					
-				gMatrix[n0x][n2y] += -2 * y;	
+				gMatrix[n1x][n0x] += 2*x - 2*x*x - 2*y*y; //gMatrix[n0x][n1x] += 2*x - 2*x*x - 2*y*y;		
+				gMatrix[n1y][n0x] += 2*y; //gMatrix[n0x][n1y] += 2*y;						
+				gMatrix[n2x][n0x] += -2 + 2*x; //gMatrix[n0x][n2x] += -2 + 2*x;					
+				gMatrix[n2y][n0x] += -2 * y; //gMatrix[n0x][n2y] += -2 * y;	
 				gMatrix[n0y][n0y] += 1 - 2*x + x*x + y*y;
-				gMatrix[n0y][n1x] += -2*y;						
-				gMatrix[n0y][n1y] += 2*x - 2*x*x - 2*y*y;		
-				gMatrix[n0y][n2x] += 2*y;						
-				gMatrix[n0y][n2y] += -2 + 2*x;	
+				gMatrix[n1x][n0y] += -2*y; //gMatrix[n0y][n1x] += -2*y;						
+				gMatrix[n1y][n0y] += 2*x - 2*x*x - 2*y*y; //gMatrix[n0y][n1y] += 2*x - 2*x*x - 2*y*y;		
+				gMatrix[n2x][n0y] += 2*y; //gMatrix[n0y][n2x] += 2*y;						
+				gMatrix[n2y][n0y] += -2 + 2*x; //gMatrix[n0y][n2y] += -2 + 2*x;	
 				gMatrix[n1x][n1x] += x*x + y*y;
-				gMatrix[n1x][n2x] += -2*x;						
-				gMatrix[n1x][n2y] += 2*y;	
+				gMatrix[n2x][n1x] += -2*x; //gMatrix[n1x][n2x] += -2*x;						
+				gMatrix[n2y][n1x] += 2*y; //gMatrix[n1x][n2y] += 2*y;	
 				gMatrix[n1y][n1y] += x*x + y*y;
-				gMatrix[n1y][n2x] += -2*y;						
-				gMatrix[n1y][n2y] += -2*x;	
+				gMatrix[n2x][n1y] += -2*y; //gMatrix[n1y][n2x] += -2*y;						
+				gMatrix[n2y][n1y] += -2*x; //gMatrix[n1y][n2y] += -2*x;	
 				gMatrix[n2x][n2x] += 1;
 				gMatrix[n2y][n2y] += 1;
 
