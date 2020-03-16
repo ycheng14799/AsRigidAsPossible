@@ -59,7 +59,7 @@ public class AsRigidAsPossible extends Applet {
 		add("North", panel2);
 		add("South", mainPanel);
 
-		myG = new MyGraphics(paintColor, Color.yellow, Color.gray);
+		myG = new MyGraphics(paintColor, Color.yellow, Color.gray, constraintColor);
 		
 		// Triangulation function
 		bTriangulate.addMouseListener(new MouseAdapter() {
@@ -126,26 +126,28 @@ public class AsRigidAsPossible extends Applet {
 				}
 			}
 			public void mousePressed(MouseEvent e) {
-				/*
 				if(cAnimate.getState()) {
 					int x = e.getX();
 					int y = e.getY();
-					if(myG.setConstraintActive(x, y)[0] == 1) {
-						activeConstraintIdx = myG.setConstraintActive(x, y)[1];
+					int[] constraintActiveReturn = myG.setConstraintActive(x, y);
+					if(constraintActiveReturn[0] == 1) {
+						activeConstraintIdx = constraintActiveReturn[1];
+						System.out.println("Setting Constraint Active");
 						manipulatingShape = true; 
 					}
 				}
-				*/
 			}
 			public void mouseReleased(MouseEvent e) {
-				/*
 				if(cAnimate.getState() && manipulatingShape) {
 					int x = e.getX();
 					int y = e.getY();
-					myG.manipulateShape(activeConstraintIdx, x, y);
+					clearMe();
+					Graphics g = getGraphics(); 
+					g.setColor(paintColor);
+					myG.stepOne(g, activeConstraintIdx, x, y);
+					g.setPaintMode();
 					manipulatingShape = false;
 				}
-				*/
 			}
 		});
 

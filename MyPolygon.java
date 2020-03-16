@@ -20,8 +20,13 @@ public class MyPolygon extends Polygon {
 	public double[][][] triangleLocal; // Vertices in triangle local coordinates
 
 	// Matrix from step one
-
 	public Matrix gPrimeInvB;
+	HashMap<XYKey, Integer> vertMap; // Vertex Map (Compiled in step one)
+	int[] vVector; // Vector for computing G 
+	// Updated Polygon and Triangles 
+	public Polygon[] updatedTri;
+	public Polygon updatedPoly; 
+
 	// public int[][] gComponentsSingle = new int[6][6];
 	// public int[] constraintX = new int[3];
 	// public int[] constraintY = new int[3]; 
@@ -264,7 +269,7 @@ public class MyPolygon extends Polygon {
 		int numFreeVars = numVertices - numConstraints;
 
 		// Figure out vertex ordering 
-		HashMap<XYKey, Integer> vertMap = new HashMap<XYKey, Integer>();
+		vertMap = new HashMap<XYKey, Integer>();
 
 		boolean isConstraint; 
 		int nRow = 0; 
@@ -295,7 +300,7 @@ public class MyPolygon extends Polygon {
 		//System.out.println(initialVertices.length);	
 
 		// Build vector for computing the G matrix 
-		int[] vVector = new int[2*numVertices];
+		vVector = new int[2*numVertices];
 		for(int i=0; i<numVertices; i++) {
 			isConstraint = false; 
 			for(int j=0; j<constrainedIdx.size(); j++) {
@@ -531,231 +536,92 @@ public class MyPolygon extends Polygon {
 	}
 	
 
-	/*
+	
 	public int[] setConstraintActive(int x, int y) {
 		int distToPoint; 
+		int numConstraints = constrainedIdx.size();
 		for(int i=0; i<numConstraints; i++) {
-			distToPoint = (constraintX[i] - x)*(constraintX[i] - x) + (constraintY[i] - y)*(constraintY[i] - y); 
+			int aConstraintX = deformedVertices[constrainedIdx.get(i)][0];
+			int aConstraintY = deformedVertices[constrainedIdx.get(i)][1];
+			distToPoint = (aConstraintX - x)*(aConstraintX - x) + (aConstraintY - y)*(aConstraintY - y); 
 			if(distToPoint < 25) { 
-				return new int[]{1, i};
+				return new int[]{1, constrainedIdx.get(i)};
 			} 
 		}
 		return new int[]{0, 0};
 	}
 	
-
-	// Precompute components for scale-free manipulation
-	// Step One in Igarashi et. al's paper
-	// Helper method for calculating 
-	// matrix components for a single triangle
-	// @params: v0x, v0y, v1x, v1y, v2x, v2y 
-	// Output: integer array of matrix components 
-	public void calcComponentsSingle(int v0x, int v0y, int v1x, int v1y, int v2x, int v2y) {
-		// find x01, y01
-		int x01 = (v2x-v0x)*(v1x-v0x) + (v2y-v0y)*(v1y-v0y);
-		int y01 = (v2x-v0x)*(v1y-v0y) + (v2y-v0y)*(v0x-v1x);
-
-		// Populate gComponentsSingle[] array 
-		for(int i=0; i<gComponentsSingle.length; i++){
-			for(int j=0; j<gComponentsSingle[0].length; j++) {
-				gComponentsSingle[i][j] = 0; 
-			}
-		}
-		gComponentsSingle[0][0] = x01*x01 - 2*x01 + y01*y01 + 1; 
-		gComponentsSingle[2][0] = -2*x01*x01 + 2*x01 - 2*y01*y01; 
-		gComponentsSingle[3][0] = 2*y01; 
-		gComponentsSingle[4][0] = 2*x01 - 2; 
-		gComponentsSingle[5][0] = -2*y01; 
-		gComponentsSingle[1][1] = x01*x01 - 2*x01 + y01*y01 + 1; 
-		gComponentsSingle[1][2] = -2*y01; 
-		gComponentsSingle[1][3] = -2*x01*x01 + 2*x01 - 2*y01*y01; 
-		gComponentsSingle[1][4] = 2*y01; 
-		gComponentsSingle[1][5] = 2*x01 - 2; 
-		gComponentsSingle[2][2] = x01*x01 + y01*y01; 
-		gComponentsSingle[2][4] = -2*x01;
-		gComponentsSingle[2][5] = 2*y01;
-		gComponentsSingle[3][3] = x01*x01 + y01*y01; 
-		gComponentsSingle[3][4] = -2*y01; 
-		gComponentsSingle[3][5] = -2*x01; 
-		gComponentsSingle[4][4] = 1; 
-		gComponentsSingle[5][5] = 1;
-	}
-	// Helper method for populating the GMatrix 
-	public void buildG(int idx0, int idx1, int idx2) {
-		int[] actual = new int[]{idx0, idx0+1, idx1, idx1+1, idx2, idx2+1}; 
-		for(int i=0; i < gComponentsSingle.length; i++) {
-			for(int j=0; j <gComponentsSingle[0].length; j++) {
-				gMatrix[actual[i]][actual[j]] += gComponentsSingle[i][j];
-			}
-		}
-	}
-
-	public void calcGMatrix() { 
-		// Iterate through triangles 
-		// Find unique verticies 
-		ArrayList<Integer> vListX = new ArrayList<Integer>(); 
-		ArrayList<Integer> vListY = new ArrayList<Integer>();
-		int x, y; 
-		boolean inV;
-		for(int i=0; i<numTriangles; i++) { 
-			for(int j=0; j<triangles[i].npoints; j++) {
-				x = triangles[i].xpoints[j];
-				y = triangles[i].ypoints[j];
-				inV = false; 
-				for(int k=0; k<vListX.size(); k++) {
-					if(x == vListX.get(k) && y == vListY.get(k)){
-						inV = true; 
-						break;
-					}
-				}
-				if(!inV) {
-					vListX.add(x);
-					vListY.add(y);
-				}
-			}
-		}
-		v = new int[vListX.size() * 2]; 
-		for(int i=0; i<vListX.size(); i++){
-			v[2*i] = vListX.get(i); 
-			v[(2*i) + 1] = vListY.get(i);
-		}
-
-		gMatrix = new int[v.length][v.length];
-		for(int i=0; i<v.length; i++) {
-			for(int j=0; j<v.length; j++) {
-				gMatrix[i][j] = 0;
-			}
-		}
-		int[] vIdx = new int[3];
-		for(int i=0; i<numTriangles; i++) { 
-			// Get triangle vertex indices in v 
-			for(int j=0; j<triangles[i].npoints; j++) {
-				for(int k=0; k<v.length; k+=2) {
-					if(triangles[i].xpoints[j] == v[k] && triangles[i].ypoints[j] == v[k+1]) {
-						vIdx[j] = k;
-						break;
-					}
-				}
-			}
-			// Calculate associated G components 
-			calcComponentsSingle(triangles[i].xpoints[0], triangles[i].ypoints[0], 
-				triangles[i].xpoints[1], triangles[i].ypoints[1], 
-				triangles[i].xpoints[2], triangles[i].ypoints[2]);
-			buildG(vIdx[0], vIdx[1], vIdx[2]);
-
-			calcComponentsSingle(triangles[i].xpoints[1], triangles[i].ypoints[1], 
-				triangles[i].xpoints[2], triangles[i].ypoints[2], 
-				triangles[i].xpoints[0], triangles[i].ypoints[0]);
-			buildG(vIdx[1], vIdx[2], vIdx[0]);
-
-			calcComponentsSingle(triangles[i].xpoints[2], triangles[i].ypoints[2], 
-				triangles[i].xpoints[0], triangles[i].ypoints[0], 
-				triangles[i].xpoints[1], triangles[i].ypoints[1]);
-			buildG(vIdx[2], vIdx[0], vIdx[1]);
-		}
-	}
-
-	// Function for obtaining G' and B in scale-free construction 
-	public void getGPrimeInvB() {
-		ArrayList<Integer> constraintIdx = new ArrayList<Integer>(); 
-		ArrayList<Integer> notConstraintIdx = new ArrayList<Integer>(); 
-		boolean isConstraint; 
-		for(int i=0; i<v.length; i+=2) { 
-			isConstraint = false; 
-			for(int j=0; j<numConstraints; j++) { 
-				if(v[i] == constraintX[j] && v[i+1] == constraintY[j]) {
-					isConstraint = true; 
-					break;
-				} 
-			}
-			if(isConstraint) {
-				constraintIdx.add(i);
-			} else {
-				notConstraintIdx.add(i); 
-			}
-		}
-
-		int[][] gReorderRow = new int[gMatrix.length][gMatrix.length]; 
-		for(int i=0; i<numConstraints; i++) {
-			for(int j=0; j<gMatrix.length; j++) {
-				gReorderRow[gMatrix.length - 2*numConstraints + i][j] = gMatrix[constraintIdx.get(i)][j];
-				gReorderRow[gMatrix.length - 2*numConstraints + i + 1][j] = gMatrix[constraintIdx.get(i) + 1][j];
-			}
-		}
-		int numFreeVariables = (gMatrix.length / 2) - numConstraints;
-		for(int i=0; i<numFreeVariables; i++) {
-			for(int j=0; j<gMatrix.length; j++) {
-				gReorderRow[i][j] = gMatrix[notConstraintIdx.get(i)][j];
-				gReorderRow[i + 1][j] = gMatrix[notConstraintIdx.get(i) + 1][j];
-			}
-		}
-		
-		int[][] gReorder = new int[gMatrix.length][gMatrix.length];
-		for(int i=0; i<gMatrix.length; i++) {
-			for(int j=0; j<numConstraints; j++) {
-				gReorder[i][gMatrix.length - 2*numConstraints + j] = gReorderRow[i][constraintIdx.get(j)];
-				gReorder[i][gMatrix.length - 2*numConstraints + j + 1] = gReorderRow[i][constraintIdx.get(j) + 1];
-			}
-		}
-		for(int i=0; i<gMatrix.length; i++) {
-			for(int j=0; j<numFreeVariables; j++) {
-				gReorder[i][j] = gReorderRow[i][notConstraintIdx.get(j)];
-				gReorder[i][j + 1] = gReorderRow[i][notConstraintIdx.get(j) + 1];
-			}
-		}
-
-		double[][] g00 = new double[gMatrix.length - 2*numConstraints][gMatrix.length - 2*numConstraints];
-		double[][] g10 = new double[2*numConstraints][gMatrix.length - 2*numConstraints];
-		double[][] g01 = new double[gMatrix.length - 2*numConstraints][2*numConstraints];
-
-		for(int i=0; i<gMatrix.length - 2*numConstraints; i++) {
-			for(int j=0; j<gMatrix.length - 2*numConstraints; j++) {
-				g00[i][j] = (double)gMatrix[i][j];
-			}
-		}
-		for(int i=0; i<2*numConstraints; i++) {
-			for(int j=0; j<gMatrix.length - 2*numConstraints; j++) {
-				g10[i][j] = (double)gMatrix[gMatrix.length - 2*numConstraints + i][j];
-			}
-		}
-		for(int i=0; i<gMatrix.length - 2*numConstraints; i++) {
-			for(int j=0; j<2*numConstraints; j++) {
-				g01[i][j] = (double)gMatrix[i][gMatrix.length - 2*numConstraints + j];
-			}
-		}
-
-		Matrix g00Matrix = new Matrix(g00);
-		Matrix g10Matrix = new Matrix(g10);
-		Matrix g01Matrix = new Matrix(g01);
-		
-		Matrix gPrime = g00Matrix.plus(g00Matrix.transpose());
-		Matrix b = g01Matrix.plus(g10Matrix.transpose());
-		b = b.times(-1);
-		Matrix gPrimeInv = gPrime.inverse(); 
-		gPrimeInvB = gPrimeInv.times(b);
-	}
 	
 	// Calculating new coordinates 
-	public void shapeManipulate() {
-		//System.out.println(gPrimeInvB.getRowDimension() + ", " + gPrimeInvB.getColumnDimension());
-		double[][] constraints = new double[2*numConstraints][1];
-		for(int i=0; i<numConstraints; i++) { 
-			constraints[2*i][0] = constraintX[i];
-			constraints[2*i + 1][0] = constraintY[i];
+	public void stepOne(int idx, int newX, int newY) {
+		System.out.println("Constraint Old: " + deformedVertices[idx][0] + ", " + 
+			deformedVertices[idx][1]);
+		System.out.println("Constraint New: " + newX + ", " + newY);
+		// Update deformed vertex 
+		deformedVertices[idx][0] = newX;
+		deformedVertices[idx][1] = newY; 
+		// Compile qVector 
+		int numConstraints = constrainedIdx.size();
+		int numFreeVars = numVertices - numConstraints;
+		double[][] qVec = new double[2*numConstraints][1];
+		for(int i=0; i<numConstraints; i++) {
+			qVec[2*i][0] = deformedVertices[constrainedIdx.get(i)][0];
+			qVec[2*i + 1][0] = deformedVertices[constrainedIdx.get(i)][1];
 		}
-		Matrix qMatrix = new Matrix(constraints); 
-		//System.out.println(qMatrix.getRowDimension() + ", " + qMatrix.getColumnDimension());
-		Matrix manipulateNewPos = gPrimeInvB.times(qMatrix);
-		double[][] newPosDouble = manipulateNewPos.getArrayCopy();
-		//System.out.println(newPosDouble[0].length);
-		newPos = new int[newPosDouble.length]; 
-		System.out.println("v length: " + v.length);
-		System.out.println("New Length: " + newPosDouble.length);
-
-		for(int i=0; i<newPosDouble.length; i+=2) {
-			System.out.println("Old: " + v[i] + ", " + v[i+1]);
-			System.out.println("New: " + (int)newPosDouble[i][0] + ", " + (int)newPosDouble[i+1][0]);
+		// Sanity Check 
+		/* 
+		for(int i=0; i<2*numConstraints; i++) {
+			System.out.println(qVec[i][0] + ", " + vVector[2*numFreeVars + i]);
 		}
+		*/ 
+		// Build map to initial vertices 
+		HashMap<XYKey, Integer> mapToInitial = new HashMap<XYKey, Integer>(); 
+		for(int i=0; i < numVertices; i++) { 
+			mapToInitial.put(new XYKey(initialVertices[i][0], initialVertices[i][1]), i); 
+		}
+		Matrix qVecMat = new Matrix(qVec);
+		Matrix results = gPrimeInvB.times(qVecMat);
+		int origX, origY, origIdx; 
+		for(int i=0; i<2*numFreeVars; i+=2) {
+			origX = vVector[i]; 
+			origY = vVector[i+1]; 
+			origIdx = mapToInitial.get(new XYKey(origX, origY)); 
+			if(origIdx != -1) {
+ 				deformedVertices[origIdx][0] = (int)results.get(i, 0); 
+				deformedVertices[origIdx][1] = (int)results.get(i+1, 0);
+			}
+		}
+		// Sanity Check 
+		for(int i=0; i<numVertices; i++) {
+			System.out.println("Original: (" + initialVertices[i][0] +
+				", " + initialVertices[i][1] + "), " +
+				"Final: (" + deformedVertices[i][0] + ", " + 
+				deformedVertices[i][1] + ")");
+		}
+		// Update Polygon 
+		updatedTri = new Polygon[numTriangles];
+		int[] newTriX = new int[3];
+		int[] newTriY = new int[3];
+		int currX, currY, currIdx; 
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<3; j++){
+				currX = triangles[i].xpoints[j];
+				currY = triangles[i].ypoints[j]; 
+				currIdx = mapToInitial.get(new XYKey(currX, currY)); 
+				newTriX[j] = deformedVertices[currIdx][0];
+				newTriY[j] = deformedVertices[currIdx][1];
+			}
+			updatedTri[i] = new Polygon(newTriX, newTriY, 3);
+		}
+		int[] newPolyX = new int[numVertices]; 
+		int[] newPolyY = new int[numVertices];
+		for(int i=0; i<numVertices; i++) { 
+			currX = xpoints[i];
+			currY = ypoints[i]; 
+			currIdx = mapToInitial.get(new XYKey(currX, currY));
+			newPolyX[i] = deformedVertices[currIdx][0];
+			newPolyY[i] = deformedVertices[currIdx][1];
+		}
+		updatedPoly = new Polygon(newPolyX, newPolyY, numVertices);
 	}
-	*/
 }
