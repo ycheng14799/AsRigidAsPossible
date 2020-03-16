@@ -145,6 +145,7 @@ public class AsRigidAsPossible extends Applet {
 					Graphics g = getGraphics(); 
 					g.setColor(paintColor);
 					myG.stepOne(g, activeConstraintIdx, x, y);
+					myG.stepTwoOne(g);
 					g.setPaintMode();
 					manipulatingShape = false;
 				}

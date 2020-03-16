@@ -27,6 +27,9 @@ public class MyPolygon extends Polygon {
 	public Polygon[] updatedTri;
 	public Polygon updatedPoly; 
 
+	// Matrix from step 2.1 
+	public Matrix[] fInvC; 
+
 	// public int[][] gComponentsSingle = new int[6][6];
 	// public int[] constraintX = new int[3];
 	// public int[] constraintY = new int[3]; 
@@ -623,5 +626,180 @@ public class MyPolygon extends Polygon {
 			newPolyY[i] = deformedVertices[currIdx][1];
 		}
 		updatedPoly = new Polygon(newPolyX, newPolyY, numVertices);
+	}
+
+	// Calculate FInvC matrices 
+	public void calcFInvC() {
+		//System.out.println("Fit Error Function Check"); 
+		// fInvC matrices  
+		fInvC = new Matrix[numTriangles];
+		for(int i=0; i<numTriangles; i++) {
+			Polygon triangle = triangles[i];
+			
+			double x01 = triangleLocal[i][0][0];
+			double y01 = triangleLocal[i][0][1];
+			double x12 = triangleLocal[i][1][0];
+			double y12 = triangleLocal[i][1][1];
+			double x20 = triangleLocal[i][2][0];
+			double y20 = triangleLocal[i][2][1];
+
+			// int[] v0 = new int[]{triangle.xpoints[0], triangle.ypoints[0]};
+			// int[] v1 = new int[]{triangle.xpoints[1], triangle.ypoints[1]};
+			// int[] v2 = new int[]{triangle.xpoints[2], triangle.ypoints[2]};
+			
+			/*
+			double E2 = ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) - v2[0] ) *
+			( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) - v2[0] ) +
+			( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) - v2[1]) * 
+			( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) - v2[1]);
+			
+			double E1 = ( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) 
+			+ x20 * ( v0[0] - ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) ) 
+			+ y20 * ( v0[1] - ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) ) 
+			- v1[0] ) * 
+			( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) 
+			+ x20 * ( v0[0] - ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) ) 
+			+ y20 * ( v0[1] - ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) ) 
+			- v1[0] ) + 
+			( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) 
+			+ x20 * ( v0[1] - ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) ) 
+			+ y20 * ( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) 
+			- v0[0] ) - v1[1] ) * ( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) 
+			+ x20 * ( v0[1] - ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) ) 
+			+ y20 * ( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) 
+			- v0[0] ) - v1[1] );
+
+			double E0 = ( v1[0] + x12 * ( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) - v1[0] ) + y12 * ( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) - v1[1] ) - v0[0] ) * 
+			( v1[0] + x12 * ( ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) - v1[0] ) + y12 * ( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) - v1[1] ) - v0[0] )
+			+ ( v1[1] + x12 * ( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) - v1[1] ) + y12 * ( v1[0] - ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) ) - v0[1]) * 
+			( v1[1] + x12 * ( ( v0[1] + x01 * ( v1[1] - v0[1] ) + y01 * ( v0[0] - v1[0] ) ) - v1[1] ) + y12 * ( v1[0] - ( v0[0] + x01 * ( v1[0] - v0[0] ) + y01 * ( v1[1] - v0[1] ) ) ) - v0[1]);
+			System.out.println("E2: " + E2);
+			System.out.println("E1: " + E1);
+			System.out.println("E0: " + E0);
+			*/
+
+			/*
+			E2: ( a + j ( c - a ) + k ( d - b ) - r )^2 + ( b + j ( d - b ) + k ( a - c ) - s)^2
+			Derivative with respect to a: 
+			2 (d k + a (1 - 2 j + j^2 + k^2) - c (-j + j^2 + k^2) - r + j r - k s)
+			Derivative with respect to b: 
+			2 (-c k + b (1 - 2 j + j^2 + k^2) - d (-j + j^2 + k^2) + k r - s + j s)
+			Derivative with respect to c: 
+			-2 (b k - c (j^2 + k^2) + a (-j + j^2 + k^2) + j r - k s)
+			Derivative with respect to d:
+			2 (a k + d (j^2 + k^2) - b (-j + j^2 + k^2) - k r - j s)
+
+			E1: ( ( a + j ( c - a ) + k ( d - b ) ) + m ( a - ( a + j ( c - a ) + k ( d - b ) ) ) + n ( b - ( b + j ( d - b ) + k ( a - c ) ) ) - t )^2 + ( ( b + j ( d - b ) + k ( a - c ) ) + m ( b - ( b + j ( d - b ) + k ( a - c ) ) ) + n ( ( a + j ( c - a ) + k ( d - b ) ) - a ) - u )^2
+			Derivative with respect to a: 
+			2 ( ( a + j ( c - a ) + k ( d - b ) ) + m ( a - ( a + j ( c - a ) + k ( d - b ) ) ) + n ( b - ( b + j ( d - b ) + k ( a - c ) ) ) - t ) ( 1 + j (-1 + m) - k n ) + 2 ( ( b + j ( d - b ) + k ( a - c ) ) + m ( b - ( b + j ( d - b ) + k ( a - c ) ) ) + n ( ( a + j ( c - a ) + k ( d - b ) ) - a ) - u ) ( k - k m - j n )
+			Derivative with respect to b:
+			2 ( ( a + j ( c - a ) + k ( d - b ) ) + m ( a - ( a + j ( c - a ) + k ( d - b ) ) ) + n ( b - ( b + j ( d - b ) + k ( a - c ) ) ) - t ) ( k (-1 + m) + j n ) + 2 ( ( b + j ( d - b ) + k ( a - c ) ) + m ( b - ( b + j ( d - b ) + k ( a - c ) ) ) + n ( ( a + j ( c - a ) + k ( d - b ) ) - a ) - u ) ( 1 + j (-1 + m) - k n )
+			Derivative with respect to c:
+			2 ( ( a + j ( c - a ) + k ( d - b ) ) + m ( a - ( a + j ( c - a ) + k ( d - b ) ) ) + n ( b - ( b + j ( d - b ) + k ( a - c ) ) ) - t ) ( j - j m + k n ) + 2 ( ( b + j ( d - b ) + k ( a - c ) ) + m ( b - ( b + j ( d - b ) + k ( a - c ) ) ) + n ( ( a + j ( c - a ) + k ( d - b ) ) - a ) - u ) ( k (-1 + m) + j n ) 
+			Derivative with respect to d:
+			2 ( ( a + j ( c - a ) + k ( d - b ) ) + m ( a - ( a + j ( c - a ) + k ( d - b ) ) ) + n ( b - ( b + j ( d - b ) + k ( a - c ) ) ) - t ) ( k - k m - j n ) + 2 ( ( b + j ( d - b ) + k ( a - c ) ) + m ( b - ( b + j ( d - b ) + k ( a - c ) ) ) + n ( ( a + j ( c - a ) + k ( d - b ) ) - a ) - u ) ( j - j m + k n )
+
+			E0: ( c + p ( ( a + j ( c - a ) + k ( d - b ) ) - c ) + q ( ( b + j ( d - b ) + k ( a - c ) ) - d ) - v )^2 + ( d + p ( ( b + j ( d - b ) + k ( a - c ) ) - d ) + q ( c - ( a + j ( c - a ) + k ( d - b ) ) ) - w)^2 
+			Derivative with respect to a: 
+			2 ( c + p ( ( a + j ( c - a ) + k ( d - b ) ) - c ) + q ( ( b + j ( d - b ) + k ( a - c ) ) - d ) - v ) ( p - j p + k q )  + 2 ( d + p ( ( b + j ( d - b ) + k ( a - c ) ) - d ) + q ( c - ( a + j ( c - a ) + k ( d - b ) ) ) - w) ( k p + (-1 + j) q )
+			Derivative with respect to b:
+			2 ( c + p ( ( a + j ( c - a ) + k ( d - b ) ) - c ) + q ( ( b + j ( d - b ) + k ( a - c ) ) - d ) - v ) ( -(k p) + q - j q ) + 2 ( d + p ( ( b + j ( d - b ) + k ( a - c ) ) - d ) + q ( c - ( a + j ( c - a ) + k ( d - b ) ) ) - w) ( p - j p + k q )
+			Derivative with respect to c:
+			2 ( c + p ( ( a + j ( c - a ) + k ( d - b ) ) - c ) + q ( ( b + j ( d - b ) + k ( a - c ) ) - d ) - v ) ( 1 + (-1 + j) p - k q ) + 2 ( d + p ( ( b + j ( d - b ) + k ( a - c ) ) - d ) + q ( c - ( a + j ( c - a ) + k ( d - b ) ) ) - w) ( -(k p) + q - j q )
+			Derivative with respect to d:
+			2 ( c + p ( ( a + j ( c - a ) + k ( d - b ) ) - c ) + q ( ( b + j ( d - b ) + k ( a - c ) ) - d ) - v ) ( k p + (-1 + j) q ) + 2 ( d + p ( ( b + j ( d - b ) + k ( a - c ) ) - d ) + q ( c - ( a + j ( c - a ) + k ( d - b ) ) ) - w) ( 1 + (-1 + j) p - k q )
+			*/
+
+			double[][] f = new double[4][4]; 
+			double[][] c = new double[4][6];
+
+			f[0][0] = 2*((-1 + x01)*(-1 + x01) + y01*y01) + 2*((-1 + x01)*(-1 + x01) + y01*y01)*(x12*x12 + y12*y12) + 2*(1 + 2*(-1 + x20)*x01 + ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + ((-1 + x20)*(-1 + x20) + y20*y20)*y01*y01 - 2*y01*y20);
+			f[0][1] = 0;
+			f[0][2] = 2*(-((-1 + x20)*x01) - ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + y01*(-(((-1 + x20)*(-1 + x20) + y20*y20)*y01) + y20)) + 2*(-((-1 + x01)*x12) - ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 + y12*(y01 - ((-1 + x01)*(-1 + x01) + y01*y01)*y12)) - 2*((-1 + x01)*x01 + y01*y01);
+			f[0][3] = 2*(x12*y01 + (-1 + x01)*y12) + 2*(-((-1 + x20)*y01) - x01*y20) + 2*y01;
+
+			f[1][0] = 0;
+			f[1][1] = 2*((-1 + x01)*(-1 + x01) + y01*y01) + 2*((-1 + x01)*(-1 + x01) + y01*y01)*(x12*x12 + y12*y12) + 2*(1 + 2*(-1 + x20)*x01 + ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + ((-1 + x20)*(-1 + x20) + y20*y20)*y01*y01 - 2*y01*y20);
+			f[1][2] = -2*(x12*y01 + (-1 + x01)*y12) + 2*(-y01 + x20*y01 + x01*y20) - 2*y01;
+			f[1][3] = 2*(-((-1 + x20)*x01) - ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + y01*(-(((-1 + x20)*(-1 + x20) + y20*y20)*y01) + y20)) + 2*(-((-1 + x01)*x12) - ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 + y12*(y01 - ((-1 + x01)*(-1 + x01) + y01*y01)*y12)) - 2*((-1 + x01)*x01 + y01*y01);
+
+			f[2][0] = 2*(-((-1 + x20)*x01) - ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + y01*(-(((-1 + x20)*(-1 + x20) + y20*y20)*y01) + y20)) + 2*(-((-1 + x01)*x12) - ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 + y12*(y01 - ((-1 + x01)*(-1 + x01) + y01*y01)*y12)) - 2*((-1 + x01)*x01 + y01*y01);
+			f[2][1] = -2*(x12*y01 + (-1 + x01)*y12) + 2*(-y01 + x20*y01 + x01*y20) - 2*y01;
+			f[2][2] = 2*(x01*x01 + y01*y01) + 2*(x01*x01 + y01*y01)*((-1 + x20)*(-1 + x20) + y20*y20) + 2*(1 + 2*(-1 + x01)*x12 + ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 - 2*y01*y12 + ((-1 + x01)*(-1 + x01) + y01*y01)*y12*y12);
+			f[2][3] = 0;
+
+			f[3][0] = 2*(x12*y01 + (-1 + x01)*y12) - 2*(-y01 + x20*y01 + x01*y20) + 2*y01;
+			f[3][1] = 2*(-((-1 + x20)*x01) - ((-1 + x20)*(-1 + x20) + y20*y20)*x01*x01 + y01*(-(((-1 + x20)*(-1 + x20) + y20*y20)*y01) + y20)) + 2*(-((-1 + x01)*x12) - ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 + y12*(y01 - ((-1 + x01)*(-1 + x01) + y01*y01)*y12)) - 2*((-1 + x01)*x01 + y01*y01);
+			f[3][2] = 0;
+			f[3][3] = 2*(x01*x01 + y01*y01) + 2*(x01*x01 + y01*y01)*((-1 + x20)*(-1 + x20) + y20*y20) + 2*(1 + 2*(-1 + x01)*x12 + ((-1 + x01)*(-1 + x01) + y01*y01)*x12*x12 - 2*y01*y12 + ((-1 + x01)*(-1 + x01) + y01*y01)*y12*y12);
+
+			c[0][0] = 2*(-x12 + x01*x12 - y01*y12);
+			c[0][1] = -2*(x12*y01 + (-1 + x01)*y12);
+			c[0][2] = 2*(-1-(-x01 + x01*x20 - y01*y20));
+			c[0][3] = 2*(-y01 + x20*y01 + x01*y20);
+			c[0][4] = 2*(-1 + x01);
+			c[0][5] = -2*y01;
+
+			c[1][0] = 2*(x12*y01 + (-1 + x01)*y12);
+			c[1][1] = 2*(-x12 + x01*x12 - y01*y12);
+			c[1][2] = -2*(-y01 + x20*y01 + x01*y20);
+			c[1][3] = 2*(-1-(-x01 + x01*x20 - y01*y20));
+			c[1][4] = 2*y01;
+			c[1][5] = 2*(-1 + x01);
+
+			c[2][0] = 2*(-1-(-x12 + x01*x12 - y01*y12));
+			c[2][1] = 2*(x12*y01 + (-1 + x01)*y12);
+			c[2][2] = 2*(-x01 + x01*x20 - y01*y20);
+			c[2][3] = 2*(-((-1 + x20)*y01) - x01*y20);
+			c[2][4] = -2*x01;
+			c[2][5] = 2*y01;
+
+			c[3][0] = 2*(x12*y01 + (-1 + x01)*y12);
+			c[3][1] = 2*(-1-(-x12 + x01*x12 - y01*y12));
+			c[3][2] = -2*(-y01 + x20*y01 + x01*y20);
+			c[3][3] = 2*(-x01 + x01*x20 - y01*y20);
+			c[3][4] = -2*y01;
+			c[3][5] = -2*x01;
+
+			Matrix fMatrix = new Matrix(f);
+			Matrix fMatrixInv = fMatrix.inverse();
+			Matrix cMatrix = new Matrix(c);
+			cMatrix = cMatrix.times(-1);
+			fInvC[i] = fMatrixInv.times(cMatrix);
+		}
+	}
+
+	public void stepTwoOne() {
+		
+		for(int i=0; i<numTriangles; i++) {
+			Polygon aTriangle = updatedTri[i]; 
+			double[][] triVerts = new double[6][1];
+			for(int j=0; j<3; j++) {
+				triVerts[2*j][0] = aTriangle.xpoints[j];
+				triVerts[2*j + 1][0] = aTriangle.ypoints[j];
+			}
+			Matrix triVertsMatrix = new Matrix(triVerts);
+			Matrix fitted = fInvC[i].times(triVertsMatrix);
+			int[] fitVertsX = new int[3];
+			int[] fitVertsY = new int[3];
+			for(int j=0; j<2; j++) {
+				fitVertsX[j] = (int)fitted.get(2*j,0);
+				fitVertsY[j] = (int)fitted.get(2*j+1,0);
+			}
+			double x01 = triangleLocal[i][0][0];
+			double y01 = triangleLocal[i][0][1];
+			fitVertsX[2] = (int)(fitVertsX[0] + x01*(fitVertsX[1]-fitVertsX[0]) + y01*(fitVertsY[1]-fitVertsY[0]));
+			fitVertsY[2] = (int)(fitVertsY[0] + x01*(fitVertsY[1]-fitVertsY[0]) + y01*(fitVertsX[0]-fitVertsX[1]));
+			System.out.println("Fitted Vertices: ");
+			for(int j=0; j<3; j++) {
+				System.out.println(fitVertsX[j] + ", " + fitVertsY[j]);
+			}
+			// Scaling 
+			Polygon triOrig = triangles[i];
+			double scaleFactor = (double)((fitVertsX[0]-fitVertsX[1])*(fitVertsX[0]-fitVertsX[1]) +
+			((fitVertsY[0]-fitVertsY[1])*(fitVertsY[0]-fitVertsY[1])) / 
+			(double)((triOrig.xpoints[0]-triOrig.xpoints[1])*(triOrig.xpoints[0]-triOrig.xpoints[1]) +
+			(triOrig.ypoints[0]-triOrig.ypoints[1])*(triOrig.ypoints[0]-triOrig.ypoints[1]));
+		}
 	}
 }

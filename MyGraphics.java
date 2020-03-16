@@ -97,7 +97,8 @@ public class MyGraphics {
 	
 	// Compute components for shape manipulation 
 	public void preComputeForManipulation() {
-		thePoly.calcStepOneMatrix();
+		thePoly.calcStepOneMatrix(); 
+		thePoly.calcFInvC(); 
 	}
 
 	
@@ -159,6 +160,11 @@ public class MyGraphics {
 		drawUpdatedTriangulation(g);
 		drawUpdatedPoly(g);
 		redrawConstaints(g);
+	}
+
+	// Fit triangle 
+	public void stepTwoOne(Graphics g) {
+		thePoly.stepTwoOne();
 	}
 
 	// Drawing a point 
