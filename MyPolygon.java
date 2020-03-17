@@ -26,9 +26,19 @@ public class MyPolygon extends Polygon {
 	// Updated Polygon and Triangles 
 	public Polygon[] updatedTri;
 	public Polygon updatedPoly; 
+	public boolean isUpdated = false; 
 
 	// Matrix from step 2.1 
 	public Matrix[] fInvC; 
+
+	// Fit Triangles 
+	public Polygon[] fitTri; 
+	public boolean isFit = false; 
+
+	// Final 
+	public Polygon[] finalTri; 
+	public Polygon finalPoly;
+	public boolean isStepTwoTwo = false; 
 
 	// public int[][] gComponentsSingle = new int[6][6];
 	// public int[] constraintX = new int[3];
@@ -626,6 +636,7 @@ public class MyPolygon extends Polygon {
 			newPolyY[i] = deformedVertices[currIdx][1];
 		}
 		updatedPoly = new Polygon(newPolyX, newPolyY, numVertices);
+		isUpdated = true; 
 	}
 
 	// Calculate FInvC matrices 
@@ -770,7 +781,7 @@ public class MyPolygon extends Polygon {
 	}
 
 	public void stepTwoOne() {
-		
+		fitTri = new Polygon[numTriangles];
 		for(int i=0; i<numTriangles; i++) {
 			Polygon aTriangle = updatedTri[i]; 
 			double[][] triVerts = new double[6][1];
@@ -796,10 +807,94 @@ public class MyPolygon extends Polygon {
 			}
 			// Scaling 
 			Polygon triOrig = triangles[i];
-			double scaleFactor = (double)((fitVertsX[0]-fitVertsX[1])*(fitVertsX[0]-fitVertsX[1]) +
-			((fitVertsY[0]-fitVertsY[1])*(fitVertsY[0]-fitVertsY[1])) / 
-			(double)((triOrig.xpoints[0]-triOrig.xpoints[1])*(triOrig.xpoints[0]-triOrig.xpoints[1]) +
-			(triOrig.ypoints[0]-triOrig.ypoints[1])*(triOrig.ypoints[0]-triOrig.ypoints[1]));
+			
+			double scaleFactor = (double)( (triOrig.xpoints[0]-triOrig.xpoints[1])*(triOrig.xpoints[0]-triOrig.xpoints[1]) +
+			(triOrig.ypoints[0]-triOrig.ypoints[1])*(triOrig.ypoints[0]-triOrig.ypoints[1]) ) /
+			(double)( (fitVertsX[0]-fitVertsX[1])*(fitVertsX[0]-fitVertsX[1]) +
+			(fitVertsY[0]-fitVertsY[1])*(fitVertsY[0]-fitVertsY[1]) );
+			System.out.println("Scale Factor: " + scaleFactor);
+			// Find center 
+			double fitTriCX = (double)(fitVertsX[0] + fitVertsX[1] + fitVertsX[2]) / 3.0;
+			double fitTriCY = (double)(fitVertsY[0] + fitVertsY[1] + fitVertsY[2]) / 3.0;
+			
+			for(int j=0; j<3; j++) {
+				fitVertsX[j] = (int)(scaleFactor*(fitVertsX[j] - fitTriCX) + fitTriCX);
+				fitVertsY[j] = (int)(scaleFactor*(fitVertsY[j] - fitTriCY) + fitTriCY);
+				System.out.println("Updated: " + aTriangle.xpoints[j] + ", " + aTriangle.ypoints[j]);
+				System.out.println("Fit: " + fitVertsX[j] + ", " + fitVertsY[j]);
+			}
+			
+			fitTri[i] = new Polygon(fitVertsX, fitVertsY, 3);
 		}
+		isFit = true; 
+	}
+
+	// Compute average of free vertices in fitted triangles 
+	// A simpler method 
+	public void stepTwoTwoSimple() {
+		// Build map to initial vertices 
+		HashMap<XYKey, Integer> mapToInitial = new HashMap<XYKey, Integer>(); 
+		for(int i=0; i<numVertices; i++) { 
+			mapToInitial.put(new XYKey(initialVertices[i][0], initialVertices[i][1]), i); 
+		}
+		int origIdx;
+		int[][] sumPos = new int[numVertices][2];
+		int[] numVertAppear = new int[numVertices];
+		for(int i=0; i<numTriangles; i++) {
+			Polygon aTriangle = triangles[i]; 
+			Polygon fitTriangle = fitTri[i];
+			for(int j=0; j<3; j++) {
+				origIdx = mapToInitial.get(new XYKey(aTriangle.xpoints[j], aTriangle.ypoints[j])); 
+				sumPos[origIdx][0] += fitTriangle.xpoints[j];
+				sumPos[origIdx][1] += fitTriangle.ypoints[j];
+				numVertAppear[origIdx]++; 
+			}
+		}
+		double[][] avgPos = new double[numVertices][2]; 
+		for(int i=0; i<numVertices; i++) {
+			avgPos[i][0] = (double)sumPos[i][0] / (double)numVertAppear[i];
+			avgPos[i][1] = (double)sumPos[i][1] / (double)numVertAppear[i];
+		}
+		// Number of constraints 
+		int numConstraints = constrainedIdx.size(); 
+		int numFreeVars = numVertices - numConstraints;
+		// Constraints should not be changed 
+		int origX, origY; 
+		for(int i=0; i<2*numConstraints; i+=2) {
+			origX = vVector[2*numFreeVars + i];
+			origY = vVector[2*numFreeVars + i + 1];
+			origIdx = mapToInitial.get(new XYKey(origX, origY)); 
+			if(origIdx != -1) {
+				avgPos[origIdx][0] = deformedVertices[origIdx][0];
+				avgPos[origIdx][1] = deformedVertices[origIdx][1];
+			}
+		}
+
+		// Update Polygon 
+		finalTri = new Polygon[numTriangles];
+		int[] newTriX = new int[3];
+		int[] newTriY = new int[3];
+		int currX, currY, currIdx; 
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<3; j++){
+				currX = triangles[i].xpoints[j];
+				currY = triangles[i].ypoints[j]; 
+				currIdx = mapToInitial.get(new XYKey(currX, currY)); 
+				newTriX[j] = (int)avgPos[currIdx][0];
+				newTriY[j] = (int)avgPos[currIdx][1];
+			}
+			finalTri[i] = new Polygon(newTriX, newTriY, 3);
+		}
+		int[] newPolyX = new int[numVertices]; 
+		int[] newPolyY = new int[numVertices];
+		for(int i=0; i<numVertices; i++) { 
+			currX = xpoints[i];
+			currY = ypoints[i]; 
+			currIdx = mapToInitial.get(new XYKey(currX, currY));
+			newPolyX[i] = (int)avgPos[currIdx][0];
+			newPolyY[i] = (int)avgPos[currIdx][1];
+		}
+		finalPoly = new Polygon(newPolyX, newPolyY, numVertices);
+		isStepTwoTwo = true; 
 	}
 }

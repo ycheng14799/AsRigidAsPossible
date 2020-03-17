@@ -1,16 +1,17 @@
 import java.awt.*;
 
 public class MyGraphics {
-	public Color paintColor, triColor, bkColor, constraintColor; 
+	public Color paintColor, triColor, bkColor, constraintColor, fitColor; 
 	public double scale; 
 	public int pointRadius; 
 	public MyPolygon thePoly; 
 
-	public MyGraphics(Color paint, Color tri, Color bk, Color constraint) {
+	public MyGraphics(Color paint, Color tri, Color bk, Color constraint, Color fit) {
 		paintColor = paint; 
 		triColor = tri; 
 		bkColor = bk;
 		constraintColor = constraint; 
+		fitColor = fit;
 		scale = 1.0D; 
 		pointRadius = 4; 
 		thePoly = new MyPolygon(); 
@@ -143,6 +144,43 @@ public class MyGraphics {
 				thePoly.updatedTri[i].xpoints[0], thePoly.updatedTri[i].ypoints[0]);
 		}
 	}
+	
+	// Draw final 
+	public void drawFinalPoly(Graphics g) {
+		g.setColor(paintColor);
+		for(int i=0;i<thePoly.finalPoly.npoints;i++) {
+			drawPoint(g, thePoly.finalPoly.xpoints[i], thePoly.finalPoly.ypoints[i]);
+		}
+		for(int i=0;i<thePoly.finalPoly.npoints-1;i++) {
+			g.drawLine(thePoly.finalPoly.xpoints[i], 
+						thePoly.finalPoly.ypoints[i],
+						thePoly.finalPoly.xpoints[i+1], 
+						thePoly.finalPoly.ypoints[i+1]);
+		}
+		g.drawLine(thePoly.finalPoly.xpoints[thePoly.finalPoly.npoints-1], 
+						thePoly.finalPoly.ypoints[thePoly.finalPoly.npoints-1],
+						thePoly.finalPoly.xpoints[0], 
+						thePoly.finalPoly.ypoints[0]);
+	}
+	
+	// Draw updated triangulation 
+	public void drawFinalTriangulation(Graphics g) {
+		g.setColor(triColor);
+		for(int i=0;i<thePoly.numTriangles;i++) {
+			for (int j=0; j <thePoly.finalTri[i].npoints; j++) {
+				drawPoint(g, thePoly.finalTri[i].xpoints[j], thePoly.finalTri[i].ypoints[j]);
+			}
+			for (int j=0; j <thePoly.finalTri[i].npoints-1; j++) {
+				g.drawLine(thePoly.finalTri[i].xpoints[j], 
+						thePoly.finalTri[i].ypoints[j],
+						thePoly.finalTri[i].xpoints[j+1], 
+						thePoly.finalTri[i].ypoints[j+1]);
+			}
+			g.drawLine(thePoly.finalTri[i].xpoints[2], 
+				thePoly.finalTri[i].ypoints[2],
+				thePoly.finalTri[i].xpoints[0], thePoly.finalTri[i].ypoints[0]);
+		}
+	}
 
 	// redraw Constraints 
 	public void redrawConstaints(Graphics g) {
@@ -155,16 +193,49 @@ public class MyGraphics {
 	}
 	
 	// Manipulate shape 
-	public void stepOne(Graphics g, int idx, int newX, int newY) {
+	public void stepOne(int idx, int newX, int newY) {
 		thePoly.stepOne(idx, newX, newY);
-		drawUpdatedTriangulation(g);
-		drawUpdatedPoly(g);
-		redrawConstaints(g);
+	}
+	public void drawStepOne(Graphics g) {
+		if(thePoly.isUpdated) {
+			drawUpdatedTriangulation(g);
+			drawUpdatedPoly(g);
+			redrawConstaints(g);
+		}
 	}
 
 	// Fit triangle 
-	public void stepTwoOne(Graphics g) {
+	public void stepTwoOne() {
 		thePoly.stepTwoOne();
+	}
+	public void drawStepTwoOne(Graphics g) {
+		if(thePoly.isFit) {
+			g.setColor(fitColor);
+			for(int i=0; i<thePoly.numTriangles; i++) {
+				for (int j=0; j <thePoly.fitTri[i].npoints-1; j++) {
+					g.drawLine(thePoly.fitTri[i].xpoints[j], 
+							thePoly.fitTri[i].ypoints[j],
+							thePoly.fitTri[i].xpoints[j+1], 
+							thePoly.fitTri[i].ypoints[j+1]);
+				}
+				g.drawLine(thePoly.fitTri[i].xpoints[2], 
+					thePoly.fitTri[i].ypoints[2],
+					thePoly.fitTri[i].xpoints[0], thePoly.fitTri[i].ypoints[0]);
+			}
+		}
+	}
+	
+	// Final step 
+	public void stepTwoTwoSimple() {
+		thePoly.stepTwoTwoSimple();
+	}
+	public void drawStepTwoTwoSimple(Graphics g) {
+		if(thePoly.isStepTwoTwo) {
+			g.setColor(triColor);
+			drawFinalTriangulation(g);
+			drawFinalPoly(g);
+			redrawConstaints(g);
+		}
 	}
 
 	// Drawing a point 

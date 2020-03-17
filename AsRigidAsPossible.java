@@ -8,6 +8,8 @@ public class AsRigidAsPossible extends Applet {
 	static Frame myFrame = null; 
 	Button bTriangulate; 
 	Checkbox cAnimate; 
+	Checkbox cDrawScaleFree;
+	Checkbox cDrawFit; 
 	Button bClear; 
 	Button bQuit; 
 	Panel mainPanel; 
@@ -25,6 +27,8 @@ public class AsRigidAsPossible extends Applet {
 		bTriangulate = new Button("Triangulate");
 		bClear = new Button("Clear");
 		cAnimate = new Checkbox("Animate");
+		cDrawScaleFree = new Checkbox("Draw Scale-Free");
+		cDrawFit = new Checkbox("Draw Fit");
 	}
 
 	public void clearMe() {
@@ -49,6 +53,10 @@ public class AsRigidAsPossible extends Applet {
 			panel2.add(bTriangulate);
 		cAnimate = new Checkbox("Animate");
 			panel2.add(cAnimate);
+		cDrawScaleFree = new Checkbox("Draw Scale-Free");
+			panel2.add(cDrawScaleFree);
+		cDrawFit = new Checkbox("Draw Fit");
+			panel2.add(cDrawFit);
 		bClear = new Button("Clear"); 
 			panel2.add(bClear);
 		if (myFrame != null) {
@@ -59,7 +67,7 @@ public class AsRigidAsPossible extends Applet {
 		add("North", panel2);
 		add("South", mainPanel);
 
-		myG = new MyGraphics(paintColor, Color.yellow, Color.gray, constraintColor);
+		myG = new MyGraphics(paintColor, Color.yellow, Color.gray, constraintColor, Color.green);
 		
 		// Triangulation function
 		bTriangulate.addMouseListener(new MouseAdapter() {
@@ -82,6 +90,26 @@ public class AsRigidAsPossible extends Applet {
 					myG.preComputeForManipulation(); 
 				}
 			} 
+		});
+
+		// drawStepOne 
+		cDrawScaleFree.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					Graphics g = getGraphics(); 
+					myG.drawStepOne(g); 
+				}
+			}
+		});
+
+		// drawFit
+		cDrawFit.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					Graphics g = getGraphics(); 
+					myG.drawStepTwoOne(g); 
+				}
+			}
 		});
 
 		// Clear function 
@@ -144,8 +172,18 @@ public class AsRigidAsPossible extends Applet {
 					clearMe();
 					Graphics g = getGraphics(); 
 					g.setColor(paintColor);
-					myG.stepOne(g, activeConstraintIdx, x, y);
-					myG.stepTwoOne(g);
+					myG.stepOne(activeConstraintIdx, x, y);
+					myG.stepTwoOne();
+					myG.stepTwoTwoSimple();
+					if(cDrawFit.getState()) {
+						myG.drawStepTwoOne(g);
+					} 
+					if(cDrawScaleFree.getState()) {
+						myG.drawStepOne(g);
+					} else {
+						myG.drawStepTwoTwoSimple(g);
+					}
+					
 					g.setPaintMode();
 					manipulatingShape = false;
 				}
