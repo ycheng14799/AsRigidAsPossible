@@ -100,6 +100,7 @@ public class MyGraphics {
 	public void preComputeForManipulation() {
 		thePoly.calcStepOneMatrix(); 
 		thePoly.calcFInvC(); 
+		thePoly.precomputeH();
 	}
 
 	
@@ -162,6 +163,23 @@ public class MyGraphics {
 						thePoly.finalPoly.xpoints[0], 
 						thePoly.finalPoly.ypoints[0]);
 	}
+	public void drawFinalActual(Graphics g) {
+		g.setColor(paintColor);
+		for(int i=0;i<thePoly.finalPolyActual.npoints;i++) {
+			drawPoint(g, thePoly.finalPolyActual.xpoints[i], 
+				thePoly.finalPolyActual.ypoints[i]);
+		}
+		for(int i=0;i<thePoly.finalPolyActual.npoints-1;i++) {
+			g.drawLine(thePoly.finalPolyActual.xpoints[i], 
+						thePoly.finalPolyActual.ypoints[i],
+						thePoly.finalPolyActual.xpoints[i+1], 
+						thePoly.finalPolyActual.ypoints[i+1]);
+		}
+		g.drawLine(thePoly.finalPolyActual.xpoints[thePoly.finalPolyActual.npoints-1], 
+						thePoly.finalPolyActual.ypoints[thePoly.finalPolyActual.npoints-1],
+						thePoly.finalPolyActual.xpoints[0], 
+						thePoly.finalPolyActual.ypoints[0]);
+	}
 	
 	// Draw updated triangulation 
 	public void drawFinalTriangulation(Graphics g) {
@@ -179,6 +197,23 @@ public class MyGraphics {
 			g.drawLine(thePoly.finalTri[i].xpoints[2], 
 				thePoly.finalTri[i].ypoints[2],
 				thePoly.finalTri[i].xpoints[0], thePoly.finalTri[i].ypoints[0]);
+		}
+	}
+	public void drawFinalActualTriangulation(Graphics g){
+		g.setColor(triColor);
+		for(int i=0;i<thePoly.numTriangles;i++) {
+			for (int j=0; j <thePoly.finalActualTri[i].npoints; j++) {
+				drawPoint(g, thePoly.finalActualTri[i].xpoints[j], thePoly.finalActualTri[i].ypoints[j]);
+			}
+			for (int j=0; j <thePoly.finalActualTri[i].npoints-1; j++) {
+				g.drawLine(thePoly.finalActualTri[i].xpoints[j], 
+						thePoly.finalActualTri[i].ypoints[j],
+						thePoly.finalActualTri[i].xpoints[j+1], 
+						thePoly.finalActualTri[i].ypoints[j+1]);
+			}
+			g.drawLine(thePoly.finalActualTri[i].xpoints[2], 
+				thePoly.finalActualTri[i].ypoints[2],
+				thePoly.finalActualTri[i].xpoints[0], thePoly.finalActualTri[i].ypoints[0]);
 		}
 	}
 
@@ -229,11 +264,22 @@ public class MyGraphics {
 	public void stepTwoTwoSimple() {
 		thePoly.stepTwoTwoSimple();
 	}
+	public void stepTwoTwo() {
+		thePoly.stepTwoTwo();
+	}
+	
 	public void drawStepTwoTwoSimple(Graphics g) {
 		if(thePoly.isStepTwoTwo) {
-			g.setColor(triColor);
 			drawFinalTriangulation(g);
 			drawFinalPoly(g);
+			redrawConstaints(g);
+		}
+	}
+
+	public void drawStepTwoTwo(Graphics g) {
+		if(thePoly.isStepTwoTwo) {
+			drawFinalActualTriangulation(g);
+			drawFinalActual(g);
 			redrawConstaints(g);
 		}
 	}

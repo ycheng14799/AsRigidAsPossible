@@ -39,6 +39,10 @@ public class MyPolygon extends Polygon {
 	public Polygon[] finalTri; 
 	public Polygon finalPoly;
 	public boolean isStepTwoTwo = false; 
+	Matrix dx, dy; 
+	LUDecomposition decompHxPrime, decompHyPrime;
+	public Polygon finalPolyActual;
+	public Polygon[] finalActualTri; 
 
 	// public int[][] gComponentsSingle = new int[6][6];
 	// public int[] constraintX = new int[3];
@@ -567,9 +571,9 @@ public class MyPolygon extends Polygon {
 	
 	// Calculating new coordinates 
 	public void stepOne(int idx, int newX, int newY) {
-		System.out.println("Constraint Old: " + deformedVertices[idx][0] + ", " + 
-			deformedVertices[idx][1]);
-		System.out.println("Constraint New: " + newX + ", " + newY);
+		//System.out.println("Constraint Old: " + deformedVertices[idx][0] + ", " + 
+		//	deformedVertices[idx][1]);
+		//System.out.println("Constraint New: " + newX + ", " + newY);
 		// Update deformed vertex 
 		deformedVertices[idx][0] = newX;
 		deformedVertices[idx][1] = newY; 
@@ -605,12 +609,15 @@ public class MyPolygon extends Polygon {
 			}
 		}
 		// Sanity Check 
+		/*
 		for(int i=0; i<numVertices; i++) {
 			System.out.println("Original: (" + initialVertices[i][0] +
 				", " + initialVertices[i][1] + "), " +
 				"Final: (" + deformedVertices[i][0] + ", " + 
 				deformedVertices[i][1] + ")");
 		}
+		*/
+
 		// Update Polygon 
 		updatedTri = new Polygon[numTriangles];
 		int[] newTriX = new int[3];
@@ -801,10 +808,10 @@ public class MyPolygon extends Polygon {
 			double y01 = triangleLocal[i][0][1];
 			fitVertsX[2] = (int)(fitVertsX[0] + x01*(fitVertsX[1]-fitVertsX[0]) + y01*(fitVertsY[1]-fitVertsY[0]));
 			fitVertsY[2] = (int)(fitVertsY[0] + x01*(fitVertsY[1]-fitVertsY[0]) + y01*(fitVertsX[0]-fitVertsX[1]));
-			System.out.println("Fitted Vertices: ");
-			for(int j=0; j<3; j++) {
-				System.out.println(fitVertsX[j] + ", " + fitVertsY[j]);
-			}
+			//System.out.println("Fitted Vertices: ");
+			//for(int j=0; j<3; j++) {
+			//	System.out.println(fitVertsX[j] + ", " + fitVertsY[j]);
+			//}
 			// Scaling 
 			Polygon triOrig = triangles[i];
 			
@@ -812,7 +819,7 @@ public class MyPolygon extends Polygon {
 			(triOrig.ypoints[0]-triOrig.ypoints[1])*(triOrig.ypoints[0]-triOrig.ypoints[1]) ) /
 			(double)( (fitVertsX[0]-fitVertsX[1])*(fitVertsX[0]-fitVertsX[1]) +
 			(fitVertsY[0]-fitVertsY[1])*(fitVertsY[0]-fitVertsY[1]) );
-			System.out.println("Scale Factor: " + scaleFactor);
+			//System.out.println("Scale Factor: " + scaleFactor);
 			// Find center 
 			double fitTriCX = (double)(fitVertsX[0] + fitVertsX[1] + fitVertsX[2]) / 3.0;
 			double fitTriCY = (double)(fitVertsY[0] + fitVertsY[1] + fitVertsY[2]) / 3.0;
@@ -820,8 +827,8 @@ public class MyPolygon extends Polygon {
 			for(int j=0; j<3; j++) {
 				fitVertsX[j] = (int)(scaleFactor*(fitVertsX[j] - fitTriCX) + fitTriCX);
 				fitVertsY[j] = (int)(scaleFactor*(fitVertsY[j] - fitTriCY) + fitTriCY);
-				System.out.println("Updated: " + aTriangle.xpoints[j] + ", " + aTriangle.ypoints[j]);
-				System.out.println("Fit: " + fitVertsX[j] + ", " + fitVertsY[j]);
+				//System.out.println("Updated: " + aTriangle.xpoints[j] + ", " + aTriangle.ypoints[j]);
+				//System.out.println("Fit: " + fitVertsX[j] + ", " + fitVertsY[j]);
 			}
 			
 			fitTri[i] = new Polygon(fitVertsX, fitVertsY, 3);
@@ -896,5 +903,189 @@ public class MyPolygon extends Polygon {
 		}
 		finalPoly = new Polygon(newPolyX, newPolyY, numVertices);
 		isStepTwoTwo = true; 
+	}
+
+	// Step two following paper 
+	public void stepTwoTwo() { 
+		// Number of constraints 
+		int numConstraints = constrainedIdx.size(); 
+		int numFreeVars = numVertices - numConstraints;
+		// fx and fy matrices 
+		double[][] fx = new double[numVertices][1];
+		double[][] fy = new double[numVertices][1];
+		// Use vVector and vertMap
+		for(int i=0; i<numTriangles; i++) { 
+			Polygon aTriangle = triangles[i]; 
+			Polygon fitTriangle = fitTri[i];
+			int n0 = vertMap.get(
+				new XYKey(aTriangle.xpoints[0],aTriangle.ypoints[0]));
+			int n1 = vertMap.get(
+				new XYKey(aTriangle.xpoints[1],aTriangle.ypoints[1]));
+			int n2 = vertMap.get(
+				new XYKey(aTriangle.xpoints[2],aTriangle.ypoints[2]));
+			
+			fx[n0][0] += - 4 * fitTriangle.xpoints[0] + 2 * fitTriangle.xpoints[1] + 2 * fitTriangle.xpoints[2];
+			fx[n1][0] += 2 * fitTriangle.xpoints[0] - 4 * fitTriangle.xpoints[1] + 2 * fitTriangle.xpoints[2];
+			fx[n2][0] += - 4 * fitTriangle.xpoints[2] + 2 * fitTriangle.xpoints[1] + 2 * fitTriangle.xpoints[0];
+			
+			fy[n0][0] += - 4 * fitTriangle.ypoints[0] + 2 * fitTriangle.ypoints[1] + 2 * fitTriangle.ypoints[2];
+			fy[n1][0] += 2 * fitTriangle.ypoints[0] - 4 * fitTriangle.ypoints[1] + 2 * fitTriangle.ypoints[2];
+			fy[n2][0] += - 4 * fitTriangle.ypoints[2] + 2 * fitTriangle.ypoints[1] + 2 * fitTriangle.ypoints[0];
+		}
+		Matrix fxMatrix = new Matrix(fx);
+		Matrix fyMatrix = new Matrix(fy);
+		Matrix fx0 = fxMatrix.getMatrix(0,numFreeVars-1,0,0);
+		Matrix fy0 = fyMatrix.getMatrix(0,numFreeVars-1,0,0);
+		
+		// Build q matrices 
+		double[][] qx = new double[numConstraints][1];
+		double[][] qy = new double[numConstraints][1];
+		for(int i=0; i<numConstraints; i++) {
+			qx[i][0] = deformedVertices[constrainedIdx.get(i)][0];
+			qy[i][0] = deformedVertices[constrainedIdx.get(i)][1];
+		}
+		Matrix qxMatrix = new Matrix(qx);
+		Matrix qyMatrix = new Matrix(qy);
+
+		// Solve 
+		Matrix dqf0x = dx.times(qxMatrix).plus(fx0);
+		dqf0x = dqf0x.times(-1);
+		Matrix dqf0y = dy.times(qyMatrix).plus(fy0);
+		dqf0y = dqf0y.times(-1);
+		Matrix xSol = decompHxPrime.solve(dqf0x);
+		Matrix ySol = decompHyPrime.solve(dqf0y);
+		
+		// Build map to initial vertices 
+		HashMap<XYKey, Integer> mapToInitial = new HashMap<XYKey, Integer>(); 
+		for(int i=0; i < numVertices; i++) { 
+			mapToInitial.put(new XYKey(initialVertices[i][0], initialVertices[i][1]), i); 
+		}
+		// Get final vertices 
+		int[][] finalVertices = new int[numVertices][2];
+		int origX, origY, origIdx; 
+		for(int i=0; i<numFreeVars; i++) {
+			origX = vVector[2*i]; 
+			origY = vVector[2*i+1]; 
+			origIdx = mapToInitial.get(new XYKey(origX, origY)); 
+			if(origIdx != -1) {
+ 				finalVertices[origIdx][0] = (int)xSol.get(i, 0); 
+				finalVertices[origIdx][1] = (int)ySol.get(i, 0);
+			}
+		}
+		for(int i=0; i<numConstraints; i++) {
+			finalVertices[constrainedIdx.get(i)][0] = deformedVertices[constrainedIdx.get(i)][0];
+			finalVertices[constrainedIdx.get(i)][1] = deformedVertices[constrainedIdx.get(i)][1];
+		}
+
+		finalActualTri = new Polygon[numTriangles];
+		int[] newTriX = new int[3];
+		int[] newTriY = new int[3];
+		int currX, currY, currIdx; 
+		for(int i=0; i<numTriangles; i++) {
+			for(int j=0; j<3; j++){
+				currX = triangles[i].xpoints[j];
+				currY = triangles[i].ypoints[j]; 
+				currIdx = mapToInitial.get(new XYKey(currX, currY)); 
+				newTriX[j] = finalVertices[currIdx][0];
+				newTriY[j] = finalVertices[currIdx][1];
+			}
+			finalActualTri[i] = new Polygon(newTriX, newTriY, 3);
+		}
+		int[] newPolyX = new int[numVertices]; 
+		int[] newPolyY = new int[numVertices];
+		for(int i=0; i<numVertices; i++) { 
+			currX = xpoints[i];
+			currY = ypoints[i]; 
+			currIdx = mapToInitial.get(new XYKey(currX, currY));
+			newPolyX[i] = finalVertices[currIdx][0];
+			newPolyY[i] = finalVertices[currIdx][1];
+		}
+		finalPolyActual = new Polygon(newPolyX, newPolyY, numVertices);
+		isStepTwoTwo = true; 
+	}
+
+	// Precompute H matrix 
+	public void precomputeH() {
+		double[][] hx = new double[numVertices][numVertices]; 
+		double[][] hy = new double[numVertices][numVertices];
+		// Number of constraints 
+		int numConstraints = constrainedIdx.size(); 
+		int numFreeVars = numVertices - numConstraints;
+
+		// Use vVector and vertMap
+		for(int i=0; i<numTriangles; i++) {
+			// Sanity check 
+			// Check error function 
+			Polygon aTriangle = triangles[i];
+			int n0 = vertMap.get(
+				new XYKey(aTriangle.xpoints[0],aTriangle.ypoints[0]));
+			int n1 = vertMap.get(
+				new XYKey(aTriangle.xpoints[1],aTriangle.ypoints[1]));
+			int n2 = vertMap.get(
+				new XYKey(aTriangle.xpoints[2],aTriangle.ypoints[2]));
+			
+			hx[n0][n0] += 2; 
+			hx[n0][n1] += -2;
+			hx[n1][n1] += 2;
+			hx[n1][n2] += -2; 
+			hx[n2][n2] += 2;
+			hx[n0][n2] += -2;
+
+			hy[n0][n0] += 2; 
+			hy[n0][n1] += -2;
+			hy[n1][n1] += 2;
+			hy[n1][n2] += -2; 
+			hy[n2][n2] += 2;
+			hy[n0][n2] += -2;
+
+			/*
+			hx[n0][n0] += 2; 
+			hx[n0][n1] -= 2;
+			hx[n1][n0] -= 2; 
+			hx[n1][n1] += 2; 
+
+			hx[n1][n1] += 2; 
+			hx[n1][n2] -= 2;
+			hx[n2][n1] -= 2; 
+			hx[n2][n2] += 2; 
+
+			hx[n2][n2] += 2; 
+			hx[n2][n0] -= 2;
+			hx[n0][n2] -= 2; 
+			hx[n2][n2] += 2; 
+
+			hy[n0][n0] += 2; 
+			hy[n0][n1] -= 2;
+			hy[n1][n0] -= 2; 
+			hy[n1][n1] += 2; 
+
+			hy[n1][n1] += 2; 
+			hy[n1][n2] -= 2;
+			hy[n2][n1] -= 2; 
+			hy[n2][n2] += 2; 
+
+			hy[n2][n2] += 2; 
+			hy[n2][n0] -= 2;
+			hy[n0][n2] -= 2; 
+			hy[n2][n2] += 2; 
+			*/
+		}
+
+		Matrix hxMat = new Matrix(hx);
+		Matrix hyMat = new Matrix(hy);
+		Matrix hx00 = hxMat.getMatrix(0,numFreeVars-1,0,numFreeVars-1);
+		Matrix hy00 = hyMat.getMatrix(0,numFreeVars-1,0,numFreeVars-1);
+		Matrix hx01 = hxMat.getMatrix(0, numFreeVars-1, numFreeVars, numVertices-1);
+		Matrix hy01 = hyMat.getMatrix(0, numFreeVars-1, numFreeVars, numVertices-1);
+		Matrix hx10 = hxMat.getMatrix(numFreeVars, numVertices-1, 0, numFreeVars-1);
+		Matrix hy10 = hyMat.getMatrix(numFreeVars, numVertices-1, 0, numFreeVars-1);
+		// Compute hPrime matrices 
+		Matrix hxPrime =hx00.plus(hx00.transpose());
+		Matrix hyPrime =hy00.plus(hy00.transpose());
+		// Compute d matrices 
+		dx = hx01.plus(hx10.transpose());
+		dy = hy01.plus(hy10.transpose());
+		decompHxPrime = new LUDecomposition(hxPrime);
+		decompHyPrime = new LUDecomposition(hyPrime);
 	}
 }

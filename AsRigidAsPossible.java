@@ -10,6 +10,7 @@ public class AsRigidAsPossible extends Applet {
 	Checkbox cAnimate; 
 	Checkbox cDrawScaleFree;
 	Checkbox cDrawFit; 
+	Checkbox cDrawAverage; 
 	Button bClear; 
 	Button bQuit; 
 	Panel mainPanel; 
@@ -28,6 +29,7 @@ public class AsRigidAsPossible extends Applet {
 		bClear = new Button("Clear");
 		cAnimate = new Checkbox("Animate");
 		cDrawScaleFree = new Checkbox("Draw Scale-Free");
+		cDrawAverage = new Checkbox("Draw Average");
 		cDrawFit = new Checkbox("Draw Fit");
 	}
 
@@ -57,6 +59,8 @@ public class AsRigidAsPossible extends Applet {
 			panel2.add(cDrawScaleFree);
 		cDrawFit = new Checkbox("Draw Fit");
 			panel2.add(cDrawFit);
+		cDrawAverage = new Checkbox("Draw Average");
+			panel2.add(cDrawAverage);
 		bClear = new Button("Clear"); 
 			panel2.add(bClear);
 		if (myFrame != null) {
@@ -112,6 +116,16 @@ public class AsRigidAsPossible extends Applet {
 			}
 		});
 
+		// drawAverage
+		cDrawAverage.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					Graphics g = getGraphics(); 
+					myG.drawStepTwoTwoSimple(g); 
+				}
+			}
+		});
+
 		// Clear function 
 		bClear.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -160,7 +174,7 @@ public class AsRigidAsPossible extends Applet {
 					int[] constraintActiveReturn = myG.setConstraintActive(x, y);
 					if(constraintActiveReturn[0] == 1) {
 						activeConstraintIdx = constraintActiveReturn[1];
-						System.out.println("Setting Constraint Active");
+						//System.out.println("Setting Constraint Active");
 						manipulatingShape = true; 
 					}
 				}
@@ -175,13 +189,16 @@ public class AsRigidAsPossible extends Applet {
 					myG.stepOne(activeConstraintIdx, x, y);
 					myG.stepTwoOne();
 					myG.stepTwoTwoSimple();
+					myG.stepTwoTwo();
 					if(cDrawFit.getState()) {
 						myG.drawStepTwoOne(g);
 					} 
 					if(cDrawScaleFree.getState()) {
 						myG.drawStepOne(g);
-					} else {
+					} else if(cDrawAverage.getState()) {
 						myG.drawStepTwoTwoSimple(g);
+					} else {
+						myG.drawStepTwoTwo(g);
 					}
 					
 					g.setPaintMode();
