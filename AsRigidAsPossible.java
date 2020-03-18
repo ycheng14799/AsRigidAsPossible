@@ -100,6 +100,7 @@ public class AsRigidAsPossible extends Applet {
 		cDrawScaleFree.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					clearMe();
 					Graphics g = getGraphics(); 
 					myG.drawStepOne(g); 
 				}
@@ -110,6 +111,7 @@ public class AsRigidAsPossible extends Applet {
 		cDrawFit.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					clearMe();
 					Graphics g = getGraphics(); 
 					myG.drawStepTwoOne(g); 
 				}
@@ -120,6 +122,7 @@ public class AsRigidAsPossible extends Applet {
 		cDrawAverage.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				if(e.getStateChange() == 1 && cAnimate.getState()) {
+					clearMe();
 					Graphics g = getGraphics(); 
 					myG.drawStepTwoTwoSimple(g); 
 				}
