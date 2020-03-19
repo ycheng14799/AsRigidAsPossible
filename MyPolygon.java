@@ -22,6 +22,7 @@ public class MyPolygon extends Polygon {
 	// Matrix from step one
 	public Matrix gPrimeInvB;
 	HashMap<XYKey, Integer> vertMap; // Vertex Map (Compiled in step one)
+	// Idea of building a vertex mapping from Schmidt
 	int[] vVector; // Vector for computing G 
 	// Updated Polygon and Triangles 
 	public Polygon[] updatedTri;
@@ -107,6 +108,7 @@ public class MyPolygon extends Polygon {
 	}
 
 	// O(n^4) implementation 
+	// Algorithm adapted from O'Rourke's textbook 
 	public void triangulate() {
 		numTriangles = 0; 
 
@@ -173,7 +175,8 @@ public class MyPolygon extends Polygon {
 	}
 
 	// Initialize from Mesh
-	public void initializeMesh() {
+	// Set-up inspired by Schmidt
+	public void initializeMesh() { 
 		constrainedIdx = new ArrayList<Integer>();
 		constrainedIdx.clear();
 
